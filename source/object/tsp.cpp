@@ -146,7 +146,7 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 				pcnt = i-1;
 				break;
 			}
-            SplineObject	*spline=SplineObject::Alloc(2,SPLINETYPE_LINEAR);
+            SplineObject	*spline=SplineObject::Alloc(2,SPLINETYPE_LINEAR); //http://www.microbion.co.uk/graphics/c4d/create_plugins4b.htm
             if (!spline) continue;
 			pointList[closestPoint] = 0;
 			path[i] = closestPoint;
