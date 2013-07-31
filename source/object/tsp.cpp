@@ -4,6 +4,7 @@
 #include "ge_dynamicarray.h"
 #include "octsplinify.h"
 #include "kd_tree.h"
+#include <vector>
 
 class TSPData : public ObjectData
 {
@@ -17,6 +18,8 @@ class TSPData : public ObjectData
 		virtual Bool Init(GeListNode *node);
 
 		static NodeData *Alloc(void) { return gNew TSPData; }
+    
+    BaseObject *GetVirtualObjects1(BaseObject *op, HierarchyHelp *hh);
 };
 
 void TSPData::Transform(PointObject *op, const Matrix &m)
@@ -84,7 +87,7 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     BaseObject *origSibling = orig->GetNext();
     if (!origSibling) return NULL;
 
-	SplineObject	*pp=NULL;
+
 	Bool			dirty=FALSE;
 	Matrix			ml;
 	BaseObject *child = op->GetAndCheckHierarchyClone(hh,orig,HIERARCHYCLONEFLAGS_ASPOLY,&dirty,NULL,FALSE);
@@ -104,6 +107,7 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 	GeDynamicArray<Vector> siblingPoints;
 	StatusSetBar(0);
 	StatusSetText("Collecting Points");
+    sibling->InsertUnder(child);
 	DoRecursion(op,child,childPoints, ml);
 	DoRecursion(op,sibling,siblingPoints, ml);
 
@@ -113,12 +117,13 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 	KDNode *kdTree;
 	buildKDTree(childPoints, &kdTree, rng);
 
+    sibling->Remove();
+    
 	GeDynamicArray<LONG> segments;
 
-	pp=SplineObject::Alloc(0,SPLINETYPE_LINEAR);
-	if (!pp) return NULL;
 
 	LONG pcnt = siblingPoints.GetCount();
+
 	if(pcnt > 0){
 		GeDynamicArray<LONG> pointList(pcnt);
 		GeDynamicArray<LONG> path(pcnt);
@@ -133,7 +138,7 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 		Real dist;
 		Real prevDist  = -1.;
 		Real prev2Dist = -1.;
-		for(LONG i=1;i<pcnt;i++){
+		for(LONG i=0;i<pcnt;i++){
 			dist = -1.;
 			LONG closestPoint = kdTree->getNearestNeighbor(childPoints,siblingPoints[currentPoint],pointList, dist, 0);
 			if(closestPoint == -1){
@@ -141,6 +146,8 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 				pcnt = i-1;
 				break;
 			}
+            SplineObject	*spline=SplineObject::Alloc(2,SPLINETYPE_LINEAR);
+            if (!spline) continue;
 			pointList[closestPoint] = 0;
 			path[i] = closestPoint;
 			currentPoint = closestPoint;
@@ -172,25 +179,146 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 			segments.Push(pcnt-currentSeg);
 		}
 
-		pp->ResizeObject(pcnt,segments.GetCount());
+		spline->ResizeObject(pcnt,segments.GetCount());
 
-		Segment* seg = pp->GetSegmentW();
+		Segment* seg = spline->GetSegmentW();
 		for(LONG i=0;i<segments.GetCount();i++){
 			seg[i].cnt = segments[i];
 			seg[i].closed = FALSE;
 		}
 
-		Vector *padr=pp->GetPointW();
+		Vector *padr=spline->GetPointW();
 		
 		for(LONG i=0;i<pcnt;i++){
 			padr[i] = siblingPoints[path[i]];
 		}
 	}
 	GeFree(kdTree);
-	pp->Message(MSG_UPDATE);
-	pp->SetName(op->GetName());
+	spline->Message(MSG_UPDATE);
+	spline->SetName(op->GetName());
 	StatusClear();
-	pp->InsertUnder(main);
+	spline->InsertUnder(main);
+	return main;
+}
+
+BaseObject *TSPData::GetVirtualObjects1(BaseObject *op, HierarchyHelp *hh)
+{
+    
+	BaseObject *orig = op->GetDown();
+    
+	if (!orig) return NULL;
+    
+    BaseObject *origSibling = orig->GetNext();
+    if (!origSibling) return NULL;
+    
+	SplineObject	*spline=NULL;
+	Bool			dirty=FALSE;
+	Matrix			ml;
+	BaseObject *child = op->GetAndCheckHierarchyClone(hh,orig,HIERARCHYCLONEFLAGS_ASPOLY,&dirty,NULL,FALSE);
+    BaseObject *sibling = op->GetAndCheckHierarchyClone(hh,origSibling,HIERARCHYCLONEFLAGS_ASPOLY,&dirty,NULL,FALSE);
+    
+	BaseThread    *bt=hh->GetThread();
+	BaseContainer *data = op->GetDataInstance();
+	Real maxSeg = data->GetReal(CTTSPOBJECT_MAXSEG,3.);
+	Bool relativeMaxSeg  = data->GetBool(CTTSPOBJECT_REL,TRUE);
+    
+	if (!dirty) dirty = op->CheckCache(hh);
+	if (!dirty) dirty = op->IsDirty(DIRTYFLAGS_DATA);
+	if (!dirty) return op->GetCache(hh);
+    
+    BaseObject    	*main = BaseObject::Alloc(Onull);
+	GeDynamicArray<Vector> childPoints;
+	GeDynamicArray<Vector> siblingPoints;
+	StatusSetBar(0);
+	StatusSetText("Collecting Points");
+	DoRecursion(op,child,childPoints, ml);
+	DoRecursion(op,sibling,siblingPoints, ml);
+    
+	StatusSetBar(5);
+    
+	rng.Init(1244);
+	KDNode *kdTree;
+	buildKDTree(childPoints, &kdTree, rng);
+    
+	GeDynamicArray<LONG> segments;
+    
+	spline=SplineObject::Alloc(0,SPLINETYPE_LINEAR);
+	if (!spline) return NULL;
+
+	LONG pcnt = siblingPoints.GetCount();
+	if(pcnt > 0){
+		GeDynamicArray<LONG> pointList(pcnt);
+		GeDynamicArray<LONG> path(pcnt);
+		LONG currentPoint = 0;
+		for(LONG i=0;i<pcnt;i++){
+			pointList[i] = 1;
+		}
+		path[0] = 0;
+		pointList[0] = 0;
+		LONG currentSeg = 0;
+		StatusSetText("Connecting Points");
+		Real dist;
+		Real prevDist  = -1.;
+		Real prev2Dist = -1.;
+		for(LONG i=0;i<pcnt;i++){
+			dist = -1.;
+			LONG closestPoint = kdTree->getNearestNeighbor(childPoints,siblingPoints[currentPoint],pointList, dist, 0);
+			if(closestPoint == -1){
+				GePrint("error finding neighbor");
+				pcnt = i-1;
+				break;
+			}
+            
+			pointList[closestPoint] = 0;
+			path[i] = closestPoint;
+			currentPoint = closestPoint;
+			if( relativeMaxSeg){
+				if(prevDist > 0. && prev2Dist > 0.){
+					if( dist/prevDist > maxSeg && dist/prev2Dist > maxSeg){
+						segments.Push(i-currentSeg);
+						currentSeg = i;
+					}
+				}
+			}
+			else{
+				if(dist > maxSeg){
+					segments.Push(i-currentSeg);
+					currentSeg = i;
+				}
+			}
+			if(i % 20 == 0){
+				StatusSetBar(10 + (90*i)/pcnt);
+				if (bt && bt->TestBreak()){
+					pcnt = i;
+					break;
+				}
+			}
+			prev2Dist = prevDist;
+			prevDist  = dist;
+		}
+		if(currentSeg < pcnt){
+			segments.Push(pcnt-currentSeg);
+		}
+        
+		spline->ResizeObject(pcnt,segments.GetCount());
+        
+		Segment* seg = spline->GetSegmentW();
+		for(LONG i=0;i<segments.GetCount();i++){
+			seg[i].cnt = segments[i];
+			seg[i].closed = FALSE;
+		}
+        
+		Vector *padr=spline->GetPointW();
+		
+		for(LONG i=0;i<pcnt;i++){
+			padr[i] = siblingPoints[path[i]];
+		}
+	}
+	GeFree(kdTree);
+	spline->Message(MSG_UPDATE);
+	spline->SetName(op->GetName());
+	StatusClear();
+	spline->InsertUnder(main);
 	return main;
 }
 
