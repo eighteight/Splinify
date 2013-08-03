@@ -5,6 +5,11 @@
 #include "octsplinify.h"
 #include "kd_tree.h"
 #include <vector>
+#include <string>
+
+typedef std::pair<LONG,Real> longRealPair;
+bool comparator ( const longRealPair& l, const longRealPair& r)
+{ return l.first < r.first; }
 
 class TSPData : public ObjectData
 {
@@ -77,7 +82,7 @@ void TSPData::DoRecursion(BaseObject *op, BaseObject *child, GeDynamicArray<Vect
 	}
 }
 
-BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
+BaseObject *TSPData::GetVirtualObjects1(BaseObject *op, HierarchyHelp *hh)
 {
   
 	BaseObject *orig = op->GetDown();
@@ -122,7 +127,9 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     LONG pcnt = pChild->GetPointCount();
     const Vector *childVerts = pChild->GetPointR();
     ml1 = ml1 * child->GetMl();
+    std::vector<longRealPair> childPairs(pcnt);
     for(LONG i=0;i<pcnt;i++){
+        childPairs[i] = longRealPair(i, 3.0);
         childPoints.Push(childVerts[i] * ml1);
     }
     
@@ -130,9 +137,35 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     LONG spcnt = pChild->GetPointCount();
     childVerts = pChild->GetPointR();
     ml = ml * sibling->GetMl();
+    std::vector<longRealPair> sibPairs (spcnt);
     for(LONG i=0;i<spcnt;i++){
         siblingPoints.Push(childVerts[i] * ml);
     }
+    
+    for(LONG i=0;i<spcnt;i++){
+        Real dist = MAXREALr;
+        LONG minInd;
+        for (int j = 0; j<childPoints.GetCount(); j++){
+            Real newDist = (siblingPoints[i] - childPoints[j]).GetLength();
+            if (newDist<dist){
+                for (int k=0; i < i; k++){
+                    if (sibPairs[k].first == j && sibPairs[k].second>dist) {
+                        dist = newDist;
+                        minInd = j;
+                    }
+                }
+            }
+        }
+        sibPairs[i] = longRealPair(minInd, dist);
+    }
+    
+    sort(sibPairs.begin(), sibPairs.end(), [](longRealPair const& a, longRealPair const& b)
+    {
+        if (a.second < b.second) return true;
+        if (a.second > b.second) return false;
+        
+        return false;
+    });
 
 	if(spcnt > 0){
 		GeDynamicArray<LONG> pointList(pcnt);
@@ -184,7 +217,7 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 	return main;
 }
 
-BaseObject *TSPData::GetVirtualObjects1(BaseObject *op, HierarchyHelp *hh)
+BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 {
     
 	BaseObject *orig = op->GetDown();
@@ -194,7 +227,9 @@ BaseObject *TSPData::GetVirtualObjects1(BaseObject *op, HierarchyHelp *hh)
     BaseObject *origSibling = orig->GetNext();
     if (!origSibling) return NULL;
     
-	SplineObject	*spline=NULL;
+    // start new list
+	op->NewDependenceList();
+
 	Bool			dirty=FALSE;
 	Matrix			ml;
 	BaseObject *child = op->GetAndCheckHierarchyClone(hh,orig,HIERARCHYCLONEFLAGS_ASPOLY,&dirty,NULL,FALSE);
@@ -207,6 +242,8 @@ BaseObject *TSPData::GetVirtualObjects1(BaseObject *op, HierarchyHelp *hh)
     
 	if (!dirty) dirty = op->CheckCache(hh);
 	if (!dirty) dirty = op->IsDirty(DIRTYFLAGS_DATA);
+    // mark child objects as processed
+	op->TouchDependenceList();
 	if (!dirty) return op->GetCache(hh);
     
     BaseObject    	*main = BaseObject::Alloc(Onull);
@@ -222,30 +259,23 @@ BaseObject *TSPData::GetVirtualObjects1(BaseObject *op, HierarchyHelp *hh)
 	rng.Init(1244);
 	KDNode *kdTree;
 	buildKDTree(childPoints, &kdTree, rng);
-    
-	GeDynamicArray<LONG> segments;
-    
-	spline=SplineObject::Alloc(0,SPLINETYPE_LINEAR);
-	if (!spline) return NULL;
 
 	LONG pcnt = siblingPoints.GetCount();
 	if(pcnt > 0){
 		GeDynamicArray<LONG> pointList(pcnt);
-		GeDynamicArray<LONG> path(pcnt);
+
 		LONG currentPoint = 0;
 		for(LONG i=0;i<pcnt;i++){
 			pointList[i] = 1;
 		}
-		path[0] = 0;
+
 		pointList[0] = 0;
-		LONG currentSeg = 0;
+
 		StatusSetText("Connecting Points");
 		Real dist;
-		Real prevDist  = -1.;
-		Real prev2Dist = -1.;
 		for(LONG i=0;i<pcnt;i++){
 			dist = -1.;
-			LONG closestPoint = kdTree->getNearestNeighbor(childPoints,siblingPoints[currentPoint],pointList, dist, 0);
+			LONG closestPoint = kdTree->getNearestNeighbor(childPoints,siblingPoints[i],pointList, dist, 0);
 			if(closestPoint == -1){
 				GePrint("error finding neighbor");
 				pcnt = i-1;
@@ -253,60 +283,39 @@ BaseObject *TSPData::GetVirtualObjects1(BaseObject *op, HierarchyHelp *hh)
 			}
             
 			pointList[closestPoint] = 0;
-			path[i] = closestPoint;
-			currentPoint = closestPoint;
-			if( relativeMaxSeg){
-				if(prevDist > 0. && prev2Dist > 0.){
-					if( dist/prevDist > maxSeg && dist/prev2Dist > maxSeg){
-						segments.Push(i-currentSeg);
-						currentSeg = i;
-					}
-				}
-			}
-			else{
-				if(dist > maxSeg){
-					segments.Push(i-currentSeg);
-					currentSeg = i;
-				}
-			}
-			if(i % 20 == 0){
+            
+            Vector *padr;
+            SplineObject	*spline=SplineObject::Alloc(2,SPLINETYPE_LINEAR); //http://www.microbion.co.uk/graphics/c4d/create_plugins4b.htm
+            if (!spline) continue;
+            spline->GetDataInstance()->SetBool(SPLINEOBJECT_CLOSED, FALSE);
+            padr = spline->GetPointW();
+            
+            Vector p2 = childPoints[closestPoint];
+            padr[0] = siblingPoints[i];
+            padr[1] = p2;
+			spline->Message(MSG_UPDATE);
+            spline->SetName(child->GetName());
+            spline->InsertUnder(main);
+            if(i % 20 == 0){
 				StatusSetBar(10 + (90*i)/pcnt);
 				if (bt && bt->TestBreak()){
 					pcnt = i;
 					break;
 				}
 			}
-			prev2Dist = prevDist;
-			prevDist  = dist;
-		}
-		if(currentSeg < pcnt){
-			segments.Push(pcnt-currentSeg);
-		}
-        
-		spline->ResizeObject(pcnt,segments.GetCount());
-        
-		Segment* seg = spline->GetSegmentW();
-		for(LONG i=0;i<segments.GetCount();i++){
-			seg[i].cnt = segments[i];
-			seg[i].closed = FALSE;
-		}
-        
-		Vector *padr=spline->GetPointW();
-		
-		for(LONG i=0;i<pcnt;i++){
-			padr[i] = siblingPoints[path[i]];
 		}
 	}
 	GeFree(kdTree);
-	spline->Message(MSG_UPDATE);
-	spline->SetName(op->GetName());
 	StatusClear();
-	spline->InsertUnder(main);
 	return main;
+Error:
+	BaseObject::Free(child);
+    BaseObject::Free(child);
+	return NULL;
 }
 
 // be sure to use a unique ID obtained from www.plugincafe.com
-#define ID_TSPOBJECT 1000002
+#define ID_TSPOBJECT 1030923
 
 Bool RegisterTSP(void)
 {

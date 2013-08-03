@@ -270,6 +270,7 @@
 			baseConfigurationReference = 6553A1DA0926F00F0034739A /* _api_debug.xcconfig */;
 			buildSettings = {
 				C4D_ROOTDIR = ../..;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				OTHER_LDFLAGS = "$(C4D_ROOTDIR)/resource/_api_lib/lib_api_debug.a";
 				PREBINDING = NO;
 				PRODUCT_NAME = cinema4dsdk;
@@ -281,6 +282,7 @@
 			baseConfigurationReference = 6553A1DB0926F00F0034739A /* _api_release.xcconfig */;
 			buildSettings = {
 				C4D_ROOTDIR = ../..;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				OTHER_LDFLAGS = "$(C4D_ROOTDIR)/resource/_api_lib/lib_api_release.a";
 				PREBINDING = NO;
 				PRODUCT_NAME = cinema4dsdk;
