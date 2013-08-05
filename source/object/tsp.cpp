@@ -7,6 +7,10 @@
 #include <vector>
 #include <string>
 
+#include <iostream>
+
+
+#define MAXTARGETS 100
 typedef std::pair<LONG,Real> longRealPair;
 bool comparator ( const longRealPair& l, const longRealPair& r)
 { return l.first < r.first; }
@@ -18,6 +22,7 @@ class TSPData : public ObjectData
 		void Transform(PointObject *op, const Matrix &m);
 		void DoRecursion(BaseObject *op, BaseObject *child, GeDynamicArray<Vector> &points, Matrix ml);
 		Random rng;
+        Bool isCalculated;
 	public:
 		virtual BaseObject* GetVirtualObjects(BaseObject *op, HierarchyHelp *hh);
 		virtual Bool Init(GeListNode *node);
@@ -47,6 +52,7 @@ Bool TSPData::Init(GeListNode *node)
 
 	data->SetReal(CTTSPOBJECT_MAXSEG,3.);
 	data->SetBool(CTTSPOBJECT_REL,TRUE);
+    isCalculated = FALSE;
 	return TRUE;
 }
 
@@ -226,7 +232,7 @@ BaseObject *TSPData::GetAndCheckHierarchyClone(HierarchyHelp *hh, BaseObject *pa
 	*dirty = *dirty || parent->CheckCache(hh) || parent->IsDirty(DIRTYFLAGS_DATA);
 	if (!(*dirty))
 	{
-		parent->NewDependenceList();
+		//parent->NewDependenceList();
         
         parent->GetHierarchyClone(hh,op,flags,dirty,trans);
 	}
@@ -237,7 +243,7 @@ BaseObject *TSPData::GetAndCheckHierarchyClone(HierarchyHelp *hh, BaseObject *pa
 		return parent->GetCache(hh);
 	}
     
-	parent->NewDependenceList();
+	//parent->NewDependenceList();
 
     res = parent->GetHierarchyClone(hh,op,flags,NULL,trans);
 	return res;
@@ -250,45 +256,45 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     
 	if (!orig) return NULL;
     
-    BaseObject *origSibling = orig->GetNext();
-    if (!origSibling) return NULL;
-
-	Bool			dirty=FALSE;
-	Matrix			ml;
-	BaseObject *child = GetAndCheckHierarchyClone(hh,op, orig,HIERARCHYCLONEFLAGS_ASPOLY,&dirty,NULL);
-    if (!child) return NULL;
-    Bool dirtyS = FALSE;
+    // start new list
+	op->NewDependenceList();
     
-    BaseObject *sibling = GetAndCheckHierarchyClone(hh,op,origSibling,HIERARCHYCLONEFLAGS_ASPOLY,&dirtyS,NULL);
-    if (!sibling) return NULL;
+	// check cache for validity and check master object for changes
+	Bool dirty = op->CheckCache(hh) || op->IsDirty(DIRTYFLAGS_DATA);
+    BaseObject* pp=NULL;
+	// for each child
+    LONG child_cnt =0;
 
-    dirty = dirty || dirtyS;
-	BaseThread    *bt=hh->GetThread();
-	BaseContainer *data = op->GetDataInstance();
-	Real maxSeg = data->GetReal(CTTSPOBJECT_MAXSEG,3.);
-	Bool relativeMaxSeg  = data->GetBool(CTTSPOBJECT_REL,TRUE);
+    BaseObject* children[MAXTARGETS];
+	for (pp=orig; pp; pp=pp->GetNext())
+	{
+        children[child_cnt++]=op->GetHierarchyClone(hh,pp,HIERARCHYCLONEFLAGS_ASPOLY,FALSE,NULL);
+	}
     
-
-    // mark child objects as processed
-    op->TouchDependenceList();
+	// no child object found
+	if (!child_cnt) return NULL;
+    
+	// if child list has been modified somehow
+	if (!dirty) dirty = !op->CompareDependenceList();
+    
+	// mark child objects as processed
+	op->TouchDependenceList();
+    
+	// if no change has been detected, return original cache
 	if (!dirty) return op->GetCache(hh);
+    std::cout<<"no cache"<<std::endl;
 
-    op->AddDependence(hh, child);
-    op->AddDependence(hh, sibling);
-    
-    BaseObject    	*main = NULL;//BaseObject::Alloc(Onull);
-    if (!main) return NULL;
-
-    if (FALSE){
-
-
+    BaseThread    *bt=hh->GetThread();
+    BaseObject* main = BaseObject::Alloc(Onull);
+    isCalculated = TRUE;
 
 	GeDynamicArray<Vector> childPoints;
 	GeDynamicArray<Vector> siblingPoints;
 	StatusSetBar(0);
 	StatusSetText("Collecting Points");
-	DoRecursion(op,child,childPoints, ml);
-	//DoRecursion(op,sibling,siblingPoints, ml);
+    Matrix			ml;
+	DoRecursion(op,children[0],childPoints, ml);
+	DoRecursion(op,children[1],siblingPoints, ml);
     
 	StatusSetBar(5);
     
@@ -297,7 +303,7 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 	buildKDTree(childPoints, &kdTree, rng);
 
 	LONG pcnt = siblingPoints.GetCount();
-	if(pcnt > 0 && FALSE){
+	if(pcnt > 0){
 		GeDynamicArray<LONG> pointList(pcnt);
 
 		LONG currentPoint = 0;
@@ -330,7 +336,7 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
             padr[0] = siblingPoints[i];
             padr[1] = p2;
 			spline->Message(MSG_UPDATE);
-            spline->SetName(child->GetName());
+            spline->SetName(children[0]->GetName());
             spline->InsertUnder(main);
             if(i % 20 == 0){
 				StatusSetBar(10 + (90*i)/pcnt);
@@ -342,12 +348,12 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 		}
 	}
 	GeFree(kdTree);
-    }
+
 	StatusClear();
 	return main;
 Error:
-	BaseObject::Free(child);
-    //BaseObject::Free(sibling);
+//	BaseObject::Free(childs[0]);
+//    BaseObject::Free(childs[1]);
 	return NULL;
 }
 
