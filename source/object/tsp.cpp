@@ -24,7 +24,9 @@ class TSPData : public ObjectData
 
 		static NodeData *Alloc(void) { return gNew TSPData; }
     
-    BaseObject *GetVirtualObjects1(BaseObject *op, HierarchyHelp *hh);
+        BaseObject *GetVirtualObjects1(BaseObject *op, HierarchyHelp *hh);
+    
+        BaseObject *GetAndCheckHierarchyClone(HierarchyHelp *hh, BaseObject *parent, BaseObject *op, HIERARCHYCLONEFLAGS flags, Bool *dirty, AliasTrans *trans);
 };
 
 void TSPData::Transform(PointObject *op, const Matrix &m)
@@ -217,6 +219,30 @@ BaseObject *TSPData::GetVirtualObjects1(BaseObject *op, HierarchyHelp *hh)
 	return main;
 }
 
+BaseObject *TSPData::GetAndCheckHierarchyClone(HierarchyHelp *hh, BaseObject *parent, BaseObject *op, HIERARCHYCLONEFLAGS flags, Bool *dirty, AliasTrans *trans)
+{
+	BaseObject *res=NULL;
+    
+	*dirty = *dirty || parent->CheckCache(hh) || parent->IsDirty(DIRTYFLAGS_DATA);
+	if (!(*dirty))
+	{
+		parent->NewDependenceList();
+        
+        parent->GetHierarchyClone(hh,op,flags,dirty,trans);
+	}
+	*dirty = *dirty || !parent->CompareDependenceList();
+    
+	if (!(*dirty)){
+		parent->TouchDependenceList();
+		return parent->GetCache(hh);
+	}
+    
+	parent->NewDependenceList();
+
+    res = parent->GetHierarchyClone(hh,op,flags,NULL,trans);
+	return res;
+}
+
 BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 {
     
@@ -226,33 +252,43 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     
     BaseObject *origSibling = orig->GetNext();
     if (!origSibling) return NULL;
-    
-    // start new list
-	op->NewDependenceList();
 
 	Bool			dirty=FALSE;
 	Matrix			ml;
-	BaseObject *child = op->GetAndCheckHierarchyClone(hh,orig,HIERARCHYCLONEFLAGS_ASPOLY,&dirty,NULL,FALSE);
-    BaseObject *sibling = op->GetAndCheckHierarchyClone(hh,origSibling,HIERARCHYCLONEFLAGS_ASPOLY,&dirty,NULL,FALSE);
+	BaseObject *child = GetAndCheckHierarchyClone(hh,op, orig,HIERARCHYCLONEFLAGS_ASPOLY,&dirty,NULL);
+    if (!child) return NULL;
+    Bool dirtyS = FALSE;
     
+    BaseObject *sibling = GetAndCheckHierarchyClone(hh,op,origSibling,HIERARCHYCLONEFLAGS_ASPOLY,&dirtyS,NULL);
+    if (!sibling) return NULL;
+
+    dirty = dirty || dirtyS;
 	BaseThread    *bt=hh->GetThread();
 	BaseContainer *data = op->GetDataInstance();
 	Real maxSeg = data->GetReal(CTTSPOBJECT_MAXSEG,3.);
 	Bool relativeMaxSeg  = data->GetBool(CTTSPOBJECT_REL,TRUE);
     
-	if (!dirty) dirty = op->CheckCache(hh);
-	if (!dirty) dirty = op->IsDirty(DIRTYFLAGS_DATA);
+
     // mark child objects as processed
-	op->TouchDependenceList();
+    op->TouchDependenceList();
 	if (!dirty) return op->GetCache(hh);
+
+    op->AddDependence(hh, child);
+    op->AddDependence(hh, sibling);
     
-    BaseObject    	*main = BaseObject::Alloc(Onull);
+    BaseObject    	*main = NULL;//BaseObject::Alloc(Onull);
+    if (!main) return NULL;
+
+    if (FALSE){
+
+
+
 	GeDynamicArray<Vector> childPoints;
 	GeDynamicArray<Vector> siblingPoints;
 	StatusSetBar(0);
 	StatusSetText("Collecting Points");
 	DoRecursion(op,child,childPoints, ml);
-	DoRecursion(op,sibling,siblingPoints, ml);
+	//DoRecursion(op,sibling,siblingPoints, ml);
     
 	StatusSetBar(5);
     
@@ -261,7 +297,7 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 	buildKDTree(childPoints, &kdTree, rng);
 
 	LONG pcnt = siblingPoints.GetCount();
-	if(pcnt > 0){
+	if(pcnt > 0 && FALSE){
 		GeDynamicArray<LONG> pointList(pcnt);
 
 		LONG currentPoint = 0;
@@ -306,11 +342,12 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 		}
 	}
 	GeFree(kdTree);
+    }
 	StatusClear();
 	return main;
 Error:
 	BaseObject::Free(child);
-    BaseObject::Free(child);
+    //BaseObject::Free(sibling);
 	return NULL;
 }
 

@@ -8,11 +8,24 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "source/object/tsp.cpp"
-         timestampString = "397188152.447181"
+         timestampString = "397374577.016393"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "273"
-         endingLineNumber = "273"
+         startingLineNumber = "280"
+         endingLineNumber = "280"
+         landmarkName = "TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)"
+         landmarkType = "5">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "source/object/tsp.cpp"
+         timestampString = "397374577.016393"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "253"
+         endingLineNumber = "253"
          landmarkName = "TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)"
          landmarkType = "5">
       </FileBreakpoint>
@@ -21,12 +34,12 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "source/object/tsp.cpp"
-         timestampString = "397188164.173669"
+         timestampString = "397374572.96253"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "231"
-         endingLineNumber = "231"
-         landmarkName = "TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)"
+         startingLineNumber = "224"
+         endingLineNumber = "224"
+         landmarkName = "TSPData::GetAndCheckHierarchyClone(HierarchyHelp *hh, BaseObject *parent, BaseObject *op, HIERARCHYCLONEFLAGS flags, Bool *dirty, AliasTrans *trans)"
          landmarkType = "5">
       </FileBreakpoint>
    </FileBreakpoints>
