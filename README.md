@@ -15,7 +15,7 @@ Unzip the folder to your CINEMA/plugins/ folder and restart CINEMA.
 ##Usage
 The plugin contains two objects that can be found under the ../plugins->Splinify menu entry.
 ###Splinify
-A generator (place objects under it) that takes polygon objects and connects their points in interesting ways.
+A generator (place objects under it) that takes two objects and connects their points trying to minimize the overall distance.
 
 
 ##Settings
