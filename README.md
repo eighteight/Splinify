@@ -2,7 +2,7 @@
 =============
 
 #[Download](https://github.com/eighteight/Splinify/archive/master.zip)
-![Screenshot](https://github.com/eighteight/Splinify/blob/master/screenshot.png)
+![Screenshot](https://raw.github.com/eighteight/Splinify/master/screenshot.png)
 ###[Video](https://vimeo.com/70096750)
 
 ##Compability
