@@ -2,7 +2,7 @@
 =============
 
 #[Download](https://github.com/eighteight/Splinify/archive/master.zip)
-![Screenshot](https://raw.github.com/CreativeTools/ct-maze-trace/master/screenshot.png)
+![Screenshot](https://github.com/eighteight/Splinify/blob/master/screenshot.png)
 ###[Video](https://vimeo.com/70096750)
 
 ##Compability
