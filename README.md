@@ -3,7 +3,7 @@
 
 #[Download](https://github.com/eighteight/Splinify/archive/master.zip)
 ![Screenshot](https://raw.github.com/eighteight/Splinify/master/screenshot.png)
-###[Video](https://vimeo.com/70096750)
+###[Video](https://vimeo.com) to follow
 
 ##Compability
 The plugin has been compiled with the R14 sdk and has only been tested with C4D R14.
