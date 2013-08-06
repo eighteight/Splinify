@@ -131,43 +131,34 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     StatusSetText("Collecting Points");
     GeDynamicArray<KDNode*> trees(child_cnt);
     GeDynamicArray<GeDynamicArray<Vector> > chldPoints(child_cnt);
+    GeDynamicArray<GeDynamicArray<LONG> > valdPoints(child_cnt);
     rng.Init(1244);
+    
     for (int k=0; k < child_cnt; k++){
         Matrix			ml;
-        GeDynamicArray<Vector> childPoints;
         DoRecursion(op,children[k],chldPoints[k], ml);
         KDNode *kdTree;
         buildKDTree(chldPoints[k], &kdTree, rng);
         trees[k] = kdTree;
-    }
-
-    GeDynamicArray<GeDynamicArray<LONG> > valdPoints(child_cnt);
-    
-    for(LONG k=0;k<child_cnt;k++){
         valdPoints[k] = GeDynamicArray<LONG>(chldPoints[k].GetCount());
         for (LONG i=0; i < chldPoints[k].GetCount(); i++){
             valdPoints[k][i] = 1;
         }
     }
-    
+
     StatusSetBar(5);
     StatusSetText("Connecting Points");
     for (int k=0; k < 1; k++){
         LONG pcnt = chldPoints[k+1].GetCount();
         LONG goodCnt = 0;
         if(pcnt > 0){
-            GeDynamicArray<LONG> validPoints(pcnt);
 
-            for(LONG i=0;i<pcnt;i++){
-                validPoints[i] = 1;
-            }
-
-            validPoints[0] = 0;
+            valdPoints[k][0] = 0;
 
             Real dist;
             for(LONG i=0; i < pcnt; i++){
                 dist = -1.;
-                LONG closestPointIndx = trees[k]->getNearestNeighbor(chldPoints[k],chldPoints[k+1][i],validPoints, dist, 0);
+                LONG closestPointIndx = trees[k]->getNearestNeighbor(chldPoints[k],chldPoints[k+1][i],valdPoints[k], dist, 0);
                 if(closestPointIndx == -1){
                     GePrint("error finding neighbor");
                     continue;
@@ -178,7 +169,7 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
                     continue;
                 }
                 goodCnt++;
-                validPoints[closestPointIndx] = 0;
+                valdPoints[k][closestPointIndx] = 0;
                 
                 Vector *padr;
                 SplineObject	*spline=SplineObject::Alloc(2,SPLINETYPE_LINEAR);
