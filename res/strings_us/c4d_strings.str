@@ -4,5 +4,4 @@
 STRINGTABLE
 {
 	IDS_TSP				"Splinify";
-	IDS_POINTGENERATOR			"Point Generator";
 }
