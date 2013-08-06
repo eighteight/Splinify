@@ -127,72 +127,83 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     BaseThread    *bt=hh->GetThread();
     BaseObject* main = BaseObject::Alloc(Onull);
     isCalculated = TRUE;
-
-	GeDynamicArray<Vector> childPoints;
-	GeDynamicArray<Vector> siblingPoints;
 	StatusSetBar(0);
-	StatusSetText("Collecting Points");
-    Matrix			ml;
-	DoRecursion(op,children[0],childPoints, ml);
-	DoRecursion(op,children[1],siblingPoints, ml);
     
-	StatusSetBar(5);
+    GeDynamicArray<KDNode*> trees(3);
+    GeDynamicArray<GeDynamicArray<Vector> > chldPoints(child_cnt);
+    rng.Init(1244);
+    for (int k=0; k < child_cnt; k++){
+        Matrix			ml;
+        GeDynamicArray<Vector> childPoints;
+        DoRecursion(op,children[k],chldPoints[k], ml);
+        KDNode *kdTree;
+        buildKDTree(chldPoints[k], &kdTree, rng);
+        trees[k] = kdTree;
+    }
+
     
-	rng.Init(1244);
-	KDNode *kdTree;
-	buildKDTree(childPoints, &kdTree, rng);
+    for (int k=0; k< 1; k++){
 
-	LONG pcnt = siblingPoints.GetCount();
-    LONG goodCnt = 0;
-	if(pcnt > 0){
-		GeDynamicArray<LONG> pointList(pcnt);
+        StatusSetText("Collecting Points");
+        
+        StatusSetBar(5);
 
-		for(LONG i=0;i<pcnt;i++){
-			pointList[i] = 1;
-		}
+        LONG pcnt = chldPoints[k+1].GetCount();
+        LONG goodCnt = 0;
+        if(pcnt > 0){
+            GeDynamicArray<LONG> pointList(pcnt);
 
-		pointList[0] = 0;
-
-		StatusSetText("Connecting Points");
-		Real dist;
-		for(LONG i=0;i<pcnt;i++){
-			dist = -1.;
-			LONG closestPoint = kdTree->getNearestNeighbor(childPoints,siblingPoints[i],pointList, dist, 0);
-			if(closestPoint == -1){
-				GePrint("error finding neighbor");
-				continue;
-			}
-            
-            std::cout<<"d: "<<dist<<std::endl;
-            if (dist> maxSeg || dist < 0.01) {
-                continue;
+            for(LONG i=0;i<pcnt;i++){
+                pointList[i] = 1;
             }
-            goodCnt++;
-			pointList[closestPoint] = 0;
-            
-            Vector *padr;
-            SplineObject	*spline=SplineObject::Alloc(2,SPLINETYPE_LINEAR);
-            if (!spline) continue;
-            spline->GetDataInstance()->SetBool(SPLINEOBJECT_CLOSED, FALSE);
-            padr = spline->GetPointW();
-            
-            Vector p2 = childPoints[closestPoint];
-            padr[0] = siblingPoints[i];
-            padr[1] = p2;
-            spline->SetName(children[0]->GetName());
-            spline->InsertUnder(main);
-            main->Message(MSG_UPDATE);
-            if(i % 20 == 0){
-				StatusSetBar(10 + (90*i)/pcnt);
-				if (bt && bt->TestBreak()){
-					pcnt = i;
-					break;
-				}
-			}
-		}
-	}
-    GePrint(LongToString(goodCnt));
-	GeFree(kdTree);
+
+            pointList[0] = 0;
+
+            StatusSetText("Connecting Points");
+            Real dist;
+            for(LONG i=0;i<pcnt;i++){
+                dist = -1.;
+                LONG closestPoint = trees[k]->getNearestNeighbor(chldPoints[k],chldPoints[k+1][i],pointList, dist, 0);
+                if(closestPoint == -1){
+                    GePrint("error finding neighbor");
+                    continue;
+                }
+                
+                std::cout<<"d: "<<dist<<std::endl;
+                if (dist> maxSeg || dist < 0.01) {
+                    continue;
+                }
+                goodCnt++;
+                pointList[closestPoint] = 0;
+                
+                Vector *padr;
+                SplineObject	*spline=SplineObject::Alloc(2,SPLINETYPE_LINEAR);
+                if (!spline) continue;
+                spline->GetDataInstance()->SetBool(SPLINEOBJECT_CLOSED, FALSE);
+                padr = spline->GetPointW();
+                
+                Vector p2 = chldPoints[k][closestPoint];
+                padr[0] = chldPoints[k+1][i];
+                padr[1] = p2;
+                spline->SetName(children[0]->GetName());
+                spline->InsertUnder(main);
+                main->Message(MSG_UPDATE);
+                if(i % 20 == 0){
+                    StatusSetBar(10 + (90*i)/pcnt);
+                    if (bt && bt->TestBreak()){
+                        pcnt = i;
+                        break;
+                    }
+                }
+            }
+        }
+        GePrint(LongToString(goodCnt));
+    }
+    
+    for (int k=0; k<child_cnt; k++){
+        GeFree(trees[k]);
+    }
+    
     main->Message(MSG_UPDATE);
 	StatusClear();
 	return main;
