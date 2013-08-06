@@ -148,6 +148,12 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 
     StatusSetBar(5);
     StatusSetText("Connecting Points");
+
+    
+    LONG maxPointCnt = 100;
+    for (int i = 0; i < maxPointCnt; i++){
+        GeDynamicArray<Vector> splinePoints(child_cnt);
+    }
     for (int k=0; k < 1; k++){
         LONG pcnt = chldPoints[k+1].GetCount();
         LONG goodCnt = 0;
