@@ -128,8 +128,8 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     BaseObject* main = BaseObject::Alloc(Onull);
     isCalculated = TRUE;
 	StatusSetBar(0);
-    
-    GeDynamicArray<KDNode*> trees(3);
+    StatusSetText("Collecting Points");
+    GeDynamicArray<KDNode*> trees(child_cnt);
     GeDynamicArray<GeDynamicArray<Vector> > chldPoints(child_cnt);
     rng.Init(1244);
     for (int k=0; k < child_cnt; k++){
@@ -141,30 +141,34 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
         trees[k] = kdTree;
     }
 
+    GeDynamicArray<GeDynamicArray<LONG> > valdPoints(child_cnt);
     
-    for (int k=0; k< 1; k++){
-
-        StatusSetText("Collecting Points");
-        
-        StatusSetBar(5);
-
+    for(LONG k=0;k<child_cnt;k++){
+        valdPoints[k] = GeDynamicArray<LONG>(chldPoints[k].GetCount());
+        for (LONG i=0; i < chldPoints[k].GetCount(); i++){
+            valdPoints[k][i] = 1;
+        }
+    }
+    
+    StatusSetBar(5);
+    StatusSetText("Connecting Points");
+    for (int k=0; k < 1; k++){
         LONG pcnt = chldPoints[k+1].GetCount();
         LONG goodCnt = 0;
         if(pcnt > 0){
-            GeDynamicArray<LONG> pointList(pcnt);
+            GeDynamicArray<LONG> validPoints(pcnt);
 
             for(LONG i=0;i<pcnt;i++){
-                pointList[i] = 1;
+                validPoints[i] = 1;
             }
 
-            pointList[0] = 0;
+            validPoints[0] = 0;
 
-            StatusSetText("Connecting Points");
             Real dist;
-            for(LONG i=0;i<pcnt;i++){
+            for(LONG i=0; i < pcnt; i++){
                 dist = -1.;
-                LONG closestPoint = trees[k]->getNearestNeighbor(chldPoints[k],chldPoints[k+1][i],pointList, dist, 0);
-                if(closestPoint == -1){
+                LONG closestPointIndx = trees[k]->getNearestNeighbor(chldPoints[k],chldPoints[k+1][i],validPoints, dist, 0);
+                if(closestPointIndx == -1){
                     GePrint("error finding neighbor");
                     continue;
                 }
@@ -174,7 +178,7 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
                     continue;
                 }
                 goodCnt++;
-                pointList[closestPoint] = 0;
+                validPoints[closestPointIndx] = 0;
                 
                 Vector *padr;
                 SplineObject	*spline=SplineObject::Alloc(2,SPLINETYPE_LINEAR);
@@ -182,7 +186,7 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
                 spline->GetDataInstance()->SetBool(SPLINEOBJECT_CLOSED, FALSE);
                 padr = spline->GetPointW();
                 
-                Vector p2 = chldPoints[k][closestPoint];
+                Vector p2 = chldPoints[k][closestPointIndx];
                 padr[0] = chldPoints[k+1][i];
                 padr[1] = p2;
                 spline->SetName(children[0]->GetName());
