@@ -47,6 +47,7 @@ Bool TSPData::Init(GeListNode *node)
 	data->SetReal(CTTSPOBJECT_MAXSEG,30.);
 	data->SetBool(CTTSPOBJECT_REL,TRUE);
     isCalculated = FALSE;
+    GePrint("Splinify by http://twitter.com/eight_io for Cinema 4D r14");
 	return TRUE;
 }
 
@@ -97,8 +98,6 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 	// check cache for validity and check master object for changes
 	Bool dirty = op->CheckCache(hh) || op->IsDirty(DIRTYFLAGS_DATA);
     BaseObject* pp=NULL;
-	// for each child
-    0;
 
     GeDynamicArray<BaseObject*> children;
 	for (pp=orig; pp; pp=pp->GetNext()) {
@@ -117,7 +116,6 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     
 	// if no change has been detected, return original cache
 	if (!dirty) return op->GetCache(hh);
-    std::cout<<"no cache"<<std::endl;
 
     BaseContainer *data = op->GetDataInstance();
     Real maxSeg = data->GetReal(CTTSPOBJECT_MAXSEG,30.);
@@ -150,14 +148,13 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 
     StatusSetBar(5);
     StatusSetText("Connecting Points");
-
+    Real distMin = MAXREALr;
+    Real distMax = 0.;
     for (LONG i = 0; i < maxPointCnt; i++){
         GeDynamicArray<Vector> splinePoints;
-        LONG goodCnt = 0;
         Vector prvs;
         
         for (int k=0; k < child_cnt-1; k++){
-            GePrint(children[k]->GetName()+" -> "+children[k+1]->GetName());
             if (chldPoints[k].GetCount() < i || chldPoints[k+1].GetCount()<i) continue;
 
             validPoints[k][0] = 0;
@@ -171,19 +168,17 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
                 continue;
             }
 
-            std::cout<<"d: "<<dist<<std::endl;
             if (dist> maxSeg || dist < 0.01) {
                 continue;
             }
-            goodCnt++;
             validPoints[k][closestIndx] = 0;
             
             Vector closest = chldPoints[k+1][closestIndx];
             if (k==0) splinePoints.Push(prvs);
             splinePoints.Push(closest);
-
-            GePrint(RealToString(prvs.x)+" "+RealToString(prvs.y)+" "+RealToString(prvs.z) +" => "+RealToString(closest.x)+" "+RealToString(closest.y)+" "+RealToString(closest.z));
             prvs = closest;
+            distMin = distMin<dist?distMin:dist;
+            distMax = distMax>dist?distMax:dist;
         }
         
         if (splinePoints.GetCount() == 0) continue;
@@ -205,8 +200,8 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
                 break;
             }
         }
-        GePrint(LongToString(goodCnt));
     }
+    GePrint("dist: "+RealToString(distMin)+":"+RealToString(distMax));
     
     for (int k=0; k<child_cnt; k++){
         GeFree(trees[k]);
