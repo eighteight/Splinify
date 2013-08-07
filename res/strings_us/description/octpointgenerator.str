@@ -1,5 +1,0 @@
-STRINGTABLE Octpointgenerator
-{
-	Octpointgenerator "Point Generator";
-	CTPOINTGENERATOR_NUMPOINTS		"Num Points";
-}
