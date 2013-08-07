@@ -154,17 +154,19 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     for (LONG i = 0; i < maxPointCnt; i++){
         GeDynamicArray<Vector> splinePoints;
         LONG goodCnt = 0;
+        Vector prvs;
+        
         for (int k=0; k < child_cnt-1; k++){
-            GePrint(children[k]->GetName()+" ->"+children[k+1]->GetName());
+            GePrint(children[k]->GetName()+" -> "+children[k+1]->GetName());
             if (chldPoints[k].GetCount() < i || chldPoints[k+1].GetCount()<i) continue;
 
             validPoints[k][0] = 0;
             
-            Vector nxt = chldPoints[k+1][i];
+            prvs = k==0? chldPoints[k][i]:prvs;
 
             Real dist = -1.;
-            LONG closestPointIndx = trees[k]->getNearestNeighbor(chldPoints[k], nxt, validPoints[k], dist, 0);
-            if(closestPointIndx == -1){
+            LONG closestIndx = trees[k+1]->getNearestNeighbor(chldPoints[k+1], prvs, validPoints[k], dist, 0);
+            if(closestIndx == -1){
                 GePrint("error finding neighbor");
                 continue;
             }
@@ -174,11 +176,14 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
                 continue;
             }
             goodCnt++;
-            validPoints[k][closestPointIndx] = 0;
+            validPoints[k][closestIndx] = 0;
             
-            Vector closest = chldPoints[k][closestPointIndx];
+            Vector closest = chldPoints[k+1][closestIndx];
+            if (k==0) splinePoints.Push(prvs);
             splinePoints.Push(closest);
-            splinePoints.Push(nxt);
+
+            GePrint(RealToString(prvs.x)+" "+RealToString(prvs.y)+" "+RealToString(prvs.z) +" => "+RealToString(closest.x)+" "+RealToString(closest.y)+" "+RealToString(closest.z));
+            prvs = closest;
         }
         
         if (splinePoints.GetCount() == 0) continue;
@@ -188,7 +193,6 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
         spline->GetDataInstance()->SetBool(SPLINEOBJECT_CLOSED, FALSE);
         Vector *padr = spline->GetPointW();
         for (LONG l=0;l<splinePoints.GetCount();l++){
-            GePrint(RealToString(splinePoints[l].x)+" "+RealToString(splinePoints[l].y)+" "+RealToString(splinePoints[l].z));
             padr[l] = splinePoints[l];
         }
         spline->InsertUnder(main);
