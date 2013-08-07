@@ -46,6 +46,7 @@ Bool TSPData::Init(GeListNode *node)
 
 	data->SetReal(CTTSPOBJECT_MAXSEG,30.);
 	data->SetBool(CTTSPOBJECT_REL,TRUE);
+    data->SetLong(SPLINEOBJECT_INTERPOLATION,SPLINEOBJECT_INTERPOLATION_ADAPTIVE);
     isCalculated = FALSE;
     GePrint("Splinify by http://twitter.com/eight_io for Cinema 4D r14");
 	return TRUE;
@@ -120,6 +121,7 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     BaseContainer *data = op->GetDataInstance();
     Real maxSeg = data->GetReal(CTTSPOBJECT_MAXSEG,30.);
 	Bool relativeMaxSeg  = data->GetBool(CTTSPOBJECT_REL,TRUE);
+    LONG splineInterpolation = data->GetLong(SPLINEOBJECT_INTERPOLATION);
     BaseThread    *bt=hh->GetThread();
     BaseObject* main = BaseObject::Alloc(Onull);
     isCalculated = TRUE;
