@@ -21,6 +21,7 @@ class TSPData : public ObjectData
 		LineObject *PrepareSingleSpline(BaseObject *generator, BaseObject *op, Matrix *ml, HierarchyHelp *hh, Bool *dirty);
 		void Transform(PointObject *op, const Matrix &m);
 		void DoRecursion(BaseObject *op, BaseObject *child, GeDynamicArray<Vector> &points, Matrix ml);
+        BaseObject * GetVirtualObjects1(BaseObject *op, HierarchyHelp *hh);
 		Random rng;
         Bool isCalculated;
 	public:
@@ -131,26 +132,162 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     StatusSetText("Collecting Points");
     GeDynamicArray<KDNode*> trees(child_cnt);
     GeDynamicArray<GeDynamicArray<Vector> > chldPoints(child_cnt);
-    GeDynamicArray<GeDynamicArray<LONG> > valdPoints(child_cnt);
+    GeDynamicArray<GeDynamicArray<LONG> > validPoints(child_cnt);
     rng.Init(1244);
     
+    LONG maxPointCnt = 0;
     for (int k=0; k < child_cnt; k++){
-        Matrix			ml;
+        Matrix ml;
         DoRecursion(op,children[k],chldPoints[k], ml);
         KDNode *kdTree;
         buildKDTree(chldPoints[k], &kdTree, rng);
         trees[k] = kdTree;
-        valdPoints[k] = GeDynamicArray<LONG>(chldPoints[k].GetCount());
+        validPoints[k] = GeDynamicArray<LONG>(chldPoints[k].GetCount());
         for (LONG i=0; i < chldPoints[k].GetCount(); i++){
-            valdPoints[k][i] = 1;
+            validPoints[k][i] = 1;
+        }
+        if (maxPointCnt< chldPoints[k].GetCount()){
+            maxPointCnt = chldPoints[k].GetCount();
         }
     }
 
     StatusSetBar(5);
     StatusSetText("Connecting Points");
 
+    for (LONG i = 0; i < maxPointCnt; i++){
+        GeDynamicArray<Vector> splinePoints;
+        LONG goodCnt = 0;
+        for (int k=0; k < child_cnt-1; k++){
+            if (chldPoints[k].GetCount() < i || chldPoints[k+1].GetCount()<i) continue;
+
+            validPoints[k][0] = 0;
+            
+            Vector nxt = chldPoints[k+1][i];
+
+            Real dist = -1.;
+            LONG closestPointIndx = trees[k]->getNearestNeighbor(chldPoints[k], nxt, validPoints[k], dist, 0);
+            if(closestPointIndx == -1){
+                GePrint("error finding neighbor");
+                continue;
+            }
+
+            std::cout<<"d: "<<dist<<std::endl;
+            if (dist> maxSeg || dist < 0.01) {
+                continue;
+            }
+            goodCnt++;
+            validPoints[k][closestPointIndx] = 0;
+
+            splinePoints.Push(nxt);
+            
+            Vector closest = chldPoints[k][closestPointIndx];
+            //if (!splinePoints.Find(closest)){
+                splinePoints.Push(closest);
+            //}
+        }
+        
+        if (splinePoints.GetCount() == 0) continue;
+        
+        SplineObject	*spline=SplineObject::Alloc(splinePoints.GetCount(),SPLINETYPE_LINEAR);
+        if (!spline) continue;
+        spline->GetDataInstance()->SetBool(SPLINEOBJECT_CLOSED, FALSE);
+        Vector *padr = spline->GetPointW();
+        for (LONG l=0;l<splinePoints.GetCount();l++){
+            padr[l] = splinePoints[l];
+        }
+        spline->InsertUnder(main);
+        spline->Message(MSG_UPDATE);
+        
+        if(i % 20 == 0){
+            StatusSetBar(10 + (90*i)/maxPointCnt);
+            if (bt && bt->TestBreak()){
+                //pcnt = i;
+                break;
+            }
+        }
+        GePrint(LongToString(goodCnt));
+    }
     
-    LONG maxPointCnt = 100;
+    for (int k=0; k<child_cnt; k++){
+        GeFree(trees[k]);
+    }
+    
+    main->Message(MSG_UPDATE);
+	StatusClear();
+	return main;
+Error:
+//	BaseObject::Free(childs[0]);
+//    BaseObject::Free(childs[1]);
+	return NULL;
+}
+
+BaseObject *TSPData::GetVirtualObjects1(BaseObject *op, HierarchyHelp *hh)
+{
+    
+	BaseObject *orig = op->GetDown();
+    
+	if (!orig) return NULL;
+    
+    // start new list
+	op->NewDependenceList();
+    
+	// check cache for validity and check master object for changes
+	Bool dirty = op->CheckCache(hh) || op->IsDirty(DIRTYFLAGS_DATA);
+    BaseObject* pp=NULL;
+	// for each child
+    LONG child_cnt =0;
+    
+    BaseObject* children[MAXTARGETS];
+	for (pp=orig; pp; pp=pp->GetNext()) {
+        children[child_cnt++]=op->GetHierarchyClone(hh,pp,HIERARCHYCLONEFLAGS_ASPOLY,FALSE,NULL);
+        if ((child_cnt)== MAXTARGETS) break;
+	}
+    
+	// no child objects found
+	if (!child_cnt) return NULL;
+    
+	// if child list has been modified
+	if (!dirty) dirty = !op->CompareDependenceList();
+    
+	// mark child objects as processed
+	op->TouchDependenceList();
+    
+	// if no change has been detected, return original cache
+	if (!dirty) return op->GetCache(hh);
+    std::cout<<"no cache"<<std::endl;
+    
+    BaseContainer *data = op->GetDataInstance();
+    Real maxSeg = data->GetReal(CTTSPOBJECT_MAXSEG,30.);
+	Bool relativeMaxSeg  = data->GetBool(CTTSPOBJECT_REL,TRUE);
+    BaseThread    *bt=hh->GetThread();
+    BaseObject* main = BaseObject::Alloc(Onull);
+    isCalculated = TRUE;
+	StatusSetBar(0);
+    StatusSetText("Collecting Points");
+    GeDynamicArray<KDNode*> trees(child_cnt);
+    GeDynamicArray<GeDynamicArray<Vector> > chldPoints(child_cnt);
+    GeDynamicArray<GeDynamicArray<LONG> > validPoints(child_cnt);
+    rng.Init(1244);
+    
+    LONG maxPointCnt = 0;
+    for (int k=0; k < child_cnt; k++){
+        Matrix			ml;
+        DoRecursion(op,children[k],chldPoints[k], ml);
+        KDNode *kdTree;
+        buildKDTree(chldPoints[k], &kdTree, rng);
+        trees[k] = kdTree;
+        validPoints[k] = GeDynamicArray<LONG>(chldPoints[k].GetCount());
+        for (LONG i=0; i < chldPoints[k].GetCount(); i++){
+            validPoints[k][i] = 1;
+        }
+        if (maxPointCnt< chldPoints[k].GetCount()){
+            maxPointCnt = chldPoints[k].GetCount();
+        }
+    }
+    
+    StatusSetBar(5);
+    StatusSetText("Connecting Points");
+    
     for (int i = 0; i < maxPointCnt; i++){
         GeDynamicArray<Vector> splinePoints(child_cnt);
     }
@@ -158,13 +295,13 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
         LONG pcnt = chldPoints[k+1].GetCount();
         LONG goodCnt = 0;
         if(pcnt > 0){
-
-            valdPoints[k][0] = 0;
-
+            
+            validPoints[k][0] = 0;
+            
             Real dist;
             for(LONG i=0; i < pcnt; i++){
                 dist = -1.;
-                LONG closestPointIndx = trees[k]->getNearestNeighbor(chldPoints[k],chldPoints[k+1][i],valdPoints[k], dist, 0);
+                LONG closestPointIndx = trees[k]->getNearestNeighbor(chldPoints[k],chldPoints[k+1][i],validPoints[k], dist, 0);
                 if(closestPointIndx == -1){
                     GePrint("error finding neighbor");
                     continue;
@@ -175,7 +312,7 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
                     continue;
                 }
                 goodCnt++;
-                valdPoints[k][closestPointIndx] = 0;
+                validPoints[k][closestPointIndx] = 0;
                 
                 Vector *padr;
                 SplineObject	*spline=SplineObject::Alloc(2,SPLINETYPE_LINEAR);
@@ -209,11 +346,10 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 	StatusClear();
 	return main;
 Error:
-//	BaseObject::Free(childs[0]);
-//    BaseObject::Free(childs[1]);
+    //	BaseObject::Free(childs[0]);
+    //    BaseObject::Free(childs[1]);
 	return NULL;
 }
-
 // be sure to use a unique ID obtained from www.plugincafe.com
 #define ID_TSPOBJECT 1030923
 
