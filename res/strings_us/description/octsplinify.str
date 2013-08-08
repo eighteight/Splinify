@@ -4,4 +4,5 @@ STRINGTABLE Octsplinify
 
 	CTTSPOBJECT_MAXSEG		"Maximum Segment Length";
 	CTTSPOBJECT_REL			"Relative";
+        TRACE_ELEMENTS                  "Trace Elements";
 }

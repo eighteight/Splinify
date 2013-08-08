@@ -1,6 +1,7 @@
 #include "c4d.h"
 #include "c4d_symbols.h"
 #include "c4d_tools.h"
+#include "customgui_inexclude.h"
 #include "ge_dynamicarray.h"
 #include "octsplinify.h"
 #include "kd_tree.h"
@@ -122,6 +123,8 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     Real maxSeg = data->GetReal(CTTSPOBJECT_MAXSEG,30.);
 	Bool relativeMaxSeg  = data->GetBool(CTTSPOBJECT_REL,TRUE);
     LONG splineInterpolation = data->GetLong(SPLINEOBJECT_INTERPOLATION);
+    InExcludeData* traceElements = (InExcludeData*)data->GetCustomDataType(TRACE_ELEMENTS, CUSTOMDATATYPE_INEXCLUDE_LIST);
+    //InExcludeData* t_objlist = (InExcludeData*)data->GetCustomDataType(FLUID_CONTAINER_OBSTACLES,CUSTOMDATATYPE_INEXCLUDE_LIST);
     BaseThread    *bt=hh->GetThread();
     BaseObject* main = BaseObject::Alloc(Onull);
     isCalculated = TRUE;
