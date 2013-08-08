@@ -10,7 +10,7 @@
 		AFA997F8179B7D5500546EC9 /* kd_tree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFA997F2179B7D5500546EC9 /* kd_tree.cpp */; };
 		AFA997F9179B7D5500546EC9 /* kd_tree.h in Headers */ = {isa = PBXBuildFile; fileRef = AFA997F3179B7D5500546EC9 /* kd_tree.h */; };
 		AFA997FA179B7D5500546EC9 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFA997F4179B7D5500546EC9 /* main.cpp */; };
-		AFA997FC179B7D5500546EC9 /* tsp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFA997F7179B7D5500546EC9 /* tsp.cpp */; };
+		AFA997FC179B7D5500546EC9 /* splinify.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFA997F7179B7D5500546EC9 /* splinify.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXBuildRule section */
@@ -56,7 +56,7 @@
 		AFA997F2179B7D5500546EC9 /* kd_tree.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = kd_tree.cpp; sourceTree = "<group>"; };
 		AFA997F3179B7D5500546EC9 /* kd_tree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kd_tree.h; sourceTree = "<group>"; };
 		AFA997F4179B7D5500546EC9 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
-		AFA997F7179B7D5500546EC9 /* tsp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tsp.cpp; sourceTree = "<group>"; };
+		AFA997F7179B7D5500546EC9 /* splinify.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = splinify.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -120,7 +120,7 @@
 		AFA997F5179B7D5500546EC9 /* object */ = {
 			isa = PBXGroup;
 			children = (
-				AFA997F7179B7D5500546EC9 /* tsp.cpp */,
+				AFA997F7179B7D5500546EC9 /* splinify.cpp */,
 			);
 			path = object;
 			sourceTree = "<group>";
@@ -234,7 +234,7 @@
 			files = (
 				AFA997F8179B7D5500546EC9 /* kd_tree.cpp in Sources */,
 				AFA997FA179B7D5500546EC9 /* main.cpp in Sources */,
-				AFA997FC179B7D5500546EC9 /* tsp.cpp in Sources */,
+				AFA997FC179B7D5500546EC9 /* splinify.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -1,6 +1,6 @@
 STRINGTABLE Octsplinify
 {
-	Octsplinify			"TSP Object";
+	Octsplinify			"Splinify Object";
 
 	CTTSPOBJECT_MAXSEG		"Maximum Segment Length";
 	CTTSPOBJECT_REL			"Relative";

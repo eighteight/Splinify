@@ -14,7 +14,7 @@ typedef std::pair<LONG,Real> longRealPair;
 bool comparator ( const longRealPair& l, const longRealPair& r)
 { return l.first < r.first; }
 
-class TSPData : public ObjectData
+class SplinifyData : public ObjectData
 {
 	private:
 		LineObject *PrepareSingleSpline(BaseObject *generator, BaseObject *op, Matrix *ml, HierarchyHelp *hh, Bool *dirty);
@@ -26,10 +26,10 @@ class TSPData : public ObjectData
 		virtual BaseObject* GetVirtualObjects(BaseObject *op, HierarchyHelp *hh);
 		virtual Bool Init(GeListNode *node);
 
-		static NodeData *Alloc(void) { return gNew TSPData; }
+		static NodeData *Alloc(void) { return gNew SplinifyData; }
 };
 
-void TSPData::Transform(PointObject *op, const Matrix &m)
+void SplinifyData::Transform(PointObject *op, const Matrix &m)
 {
 	Vector	*padr=op->GetPointW();
 	LONG	pcnt=op->GetPointCount(),i;
@@ -40,7 +40,7 @@ void TSPData::Transform(PointObject *op, const Matrix &m)
 	op->Message(MSG_UPDATE);
 }
 
-Bool TSPData::Init(GeListNode *node)
+Bool SplinifyData::Init(GeListNode *node)
 {	
 	BaseObject		*op   = (BaseObject*)node;
 	BaseContainer *data = op->GetDataInstance();
@@ -53,7 +53,7 @@ Bool TSPData::Init(GeListNode *node)
 	return TRUE;
 }
 
-void TSPData::DoRecursion(BaseObject *op, BaseObject *child, GeDynamicArray<Vector> &points, Matrix ml)
+void SplinifyData::DoRecursion(BaseObject *op, BaseObject *child, GeDynamicArray<Vector> &points, Matrix ml)
 {
 	BaseObject *tp;
 	if (child){
@@ -87,7 +87,7 @@ void TSPData::DoRecursion(BaseObject *op, BaseObject *child, GeDynamicArray<Vect
 	}
 }
 
-BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
+BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 {
     
 	BaseObject *orig = op->GetDown();
@@ -227,9 +227,9 @@ Error:
 }
 
 // unique ID obtained from www.plugincafe.com
-#define ID_TSPOBJECT 1030923
+#define ID_SPLINIFYOBJECT 1030923
 
 Bool RegisterTSP(void)
 {
-	return RegisterObjectPlugin(ID_TSPOBJECT,GeLoadString(IDS_TSP),OBJECT_GENERATOR|OBJECT_INPUT,TSPData::Alloc,"Octsplinify",AutoBitmap("tsp.tif"),0);
+	return RegisterObjectPlugin(ID_SPLINIFYOBJECT,GeLoadString(IDS_SPLINIFY),OBJECT_GENERATOR|OBJECT_INPUT,SplinifyData::Alloc,"Octsplinify",AutoBitmap("tsp.tif"),0);
 }

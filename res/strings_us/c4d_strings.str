@@ -3,5 +3,5 @@
 
 STRINGTABLE
 {
-	IDS_TSP				"Splinify";
+	IDS_SPLINIFY				"Splinify";
 }
