@@ -99,12 +99,17 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     
 	// check cache for validity and check master object for changes
 	Bool dirty = op->CheckCache(hh) || op->IsDirty(DIRTYFLAGS_DATA);
-    BaseObject* pp=NULL;
-
+    
+    BaseContainer *data = op->GetDataInstance();
+    InExcludeData* traceElements = (InExcludeData*)data->GetCustomDataType(TRACE_ELEMENTS, CUSTOMDATATYPE_INEXCLUDE_LIST);
     GeDynamicArray<BaseObject*> children;
-	for (pp=orig; pp; pp=pp->GetNext()) {
-        children.Push(op->GetHierarchyClone(hh,pp,HIERARCHYCLONEFLAGS_ASPOLY,FALSE,NULL));
-	}
+    if(traceElements && traceElements->GetObjectCount()>0) {
+        for(int i=0; i<traceElements->GetObjectCount(); ++i) {
+            BaseObject* pp = (BaseObject*)traceElements->ObjectFromIndex(op->GetDocument(),i);
+            children.Push(op->GetHierarchyClone(hh,pp,HIERARCHYCLONEFLAGS_ASPOLY,FALSE,NULL));
+        }
+    }
+    
     LONG child_cnt = children.GetCount();
     
 	// no child objects found
@@ -118,13 +123,13 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     
 	// if no change has been detected, return original cache
 	if (!dirty) return op->GetCache(hh);
+    
+    GePrint("NO CACHE");
 
-    BaseContainer *data = op->GetDataInstance();
     Real maxSeg = data->GetReal(CTTSPOBJECT_MAXSEG,30.);
 	Bool relativeMaxSeg  = data->GetBool(CTTSPOBJECT_REL,TRUE);
     LONG splineInterpolation = data->GetLong(SPLINEOBJECT_INTERPOLATION);
-    InExcludeData* traceElements = (InExcludeData*)data->GetCustomDataType(TRACE_ELEMENTS, CUSTOMDATATYPE_INEXCLUDE_LIST);
-    //InExcludeData* t_objlist = (InExcludeData*)data->GetCustomDataType(FLUID_CONTAINER_OBSTACLES,CUSTOMDATATYPE_INEXCLUDE_LIST);
+
     BaseThread    *bt=hh->GetThread();
     BaseObject* main = BaseObject::Alloc(Onull);
     isCalculated = TRUE;
@@ -188,7 +193,7 @@ BaseObject *TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
         
         if (splinePoints.GetCount() == 0) continue;
         
-        SplineObject	*spline=SplineObject::Alloc(splinePoints.GetCount(),SPLINETYPE_LINEAR);
+        SplineObject	*spline=SplineObject::Alloc(splinePoints.GetCount(),SPLINETYPE_AKIMA);
         if (!spline) continue;
         spline->GetDataInstance()->SetBool(SPLINEOBJECT_CLOSED, FALSE);
         Vector *padr = spline->GetPointW();

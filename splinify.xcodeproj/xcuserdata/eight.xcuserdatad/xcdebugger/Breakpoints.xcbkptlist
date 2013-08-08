@@ -11,19 +11,6 @@
          timestampString = "397624299.625255"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "116"
-         endingLineNumber = "116"
-         landmarkName = "TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)"
-         landmarkType = "5">
-      </FileBreakpoint>
-      <FileBreakpoint
-         shouldBeEnabled = "No"
-         ignoreCount = "0"
-         continueAfterRunningActions = "No"
-         filePath = "source/object/tsp.cpp"
-         timestampString = "397624299.625255"
-         startingColumnNumber = "9223372036854775807"
-         endingColumnNumber = "9223372036854775807"
          startingLineNumber = "89"
          endingLineNumber = "89">
       </FileBreakpoint>
@@ -32,24 +19,11 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "source/object/tsp.cpp"
-         timestampString = "397624299.625255"
+         timestampString = "397627720.929996"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "158"
-         endingLineNumber = "158"
-         landmarkName = "TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)"
-         landmarkType = "5">
-      </FileBreakpoint>
-      <FileBreakpoint
-         shouldBeEnabled = "Yes"
-         ignoreCount = "0"
-         continueAfterRunningActions = "No"
-         filePath = "source/object/tsp.cpp"
-         timestampString = "397624297.696594"
-         startingColumnNumber = "9223372036854775807"
-         endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "128"
-         endingLineNumber = "128"
+         startingLineNumber = "163"
+         endingLineNumber = "163"
          landmarkName = "TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)"
          landmarkType = "5">
       </FileBreakpoint>
