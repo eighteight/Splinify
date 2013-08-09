@@ -90,10 +90,6 @@ void SplinifyData::DoRecursion(BaseObject *op, BaseObject *child, GeDynamicArray
 BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 {
     
-	BaseObject *orig = op->GetDown();
-    
-	if (!orig) return NULL;
-    
     // start new list
 	op->NewDependenceList();
     
@@ -106,7 +102,9 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     if(traceElements && traceElements->GetObjectCount()>0) {
         for(int i=0; i<traceElements->GetObjectCount(); ++i) {
             BaseObject* pp = (BaseObject*)traceElements->ObjectFromIndex(op->GetDocument(),i);
-            children.Push(op->GetHierarchyClone(hh,pp,HIERARCHYCLONEFLAGS_ASPOLY,FALSE,NULL));
+            if (pp) {
+                children.Push(op->GetHierarchyClone(hh,pp,HIERARCHYCLONEFLAGS_ASPOLY,FALSE,NULL));
+            }
         }
     }
     
@@ -177,7 +175,10 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
                 GePrint("error finding neighbor");
                 continue;
             }
-
+            
+            distMin = distMin<dist?distMin:dist;
+            distMax = distMax>dist?distMax:dist;
+            
             if (dist> maxSeg || dist < 0.01) {
                 continue;
             }
@@ -187,8 +188,6 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
             if (k==0) splinePoints.Push(prvs);
             splinePoints.Push(closest);
             prvs = closest;
-            distMin = distMin<dist?distMin:dist;
-            distMax = distMax>dist?distMax:dist;
         }
         
         if (splinePoints.GetCount() == 0) continue;
@@ -215,14 +214,16 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     
     for (int k=0; k<child_cnt; k++){
         GeFree(trees[k]);
+        BaseObject::Free(children[k]);
     }
     
     main->Message(MSG_UPDATE);
 	StatusClear();
 	return main;
 Error:
-//	BaseObject::Free(childs[0]);
-//    BaseObject::Free(childs[1]);
+    for (int i = 0; i < children.GetCount(); i++){
+        BaseObject::Free(children[i]);
+    }
 	return NULL;
 }
 
