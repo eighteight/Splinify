@@ -89,7 +89,9 @@ void SplinifyData::DoRecursion(BaseObject *op, BaseObject *child, GeDynamicArray
 
 BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 {
-    
+    BaseDocument *doc = op->GetDocument();
+    LONG start = doc->GetTime().GetFrame(doc->GetFps());
+    LONG delta = 5;
     // start new list
 	op->NewDependenceList();
     
@@ -103,8 +105,14 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
         for(int i=0; i<traceElements->GetObjectCount(); ++i) {
             BaseObject* pp = (BaseObject*)traceElements->ObjectFromIndex(op->GetDocument(),i);
             if (pp) {
-                children.Push(op->GetHierarchyClone(hh,pp,HIERARCHYCLONEFLAGS_ASPOLY,FALSE,NULL));
+                BaseObject* chld = NULL;
+                LONG cnt = 0;
+                for (chld=pp->GetDown(); chld && cnt < delta; chld=chld->GetNext()) {
+                    children.Push(op->GetHierarchyClone(hh,chld,HIERARCHYCLONEFLAGS_ASPOLY,FALSE,NULL));
+                    cnt++;
+                }
             }
+            if (i == 0) break; //consider only one child
         }
     }
     
@@ -149,7 +157,7 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
         for (LONG i=0; i < chldPoints[k].GetCount(); i++){
             validPoints[k][i] = 1;
         }
-        if (maxPointCnt< chldPoints[k].GetCount()){
+        if (maxPointCnt < chldPoints[k].GetCount()){
             maxPointCnt = chldPoints[k].GetCount();
         }
     }
@@ -158,6 +166,7 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     StatusSetText("Connecting Points");
     Real distMin = MAXREALr;
     Real distMax = 0.;
+    GeDynamicArray<GeDynamicArray<Vector> > splinePointsM;
     for (LONG i = 0; i < maxPointCnt; i++){
         GeDynamicArray<Vector> splinePoints;
         Vector prvs;
@@ -191,7 +200,7 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
         }
         
         if (splinePoints.GetCount() == 0) continue;
-        
+        splinePointsM.Push(splinePoints);
         SplineObject	*spline=SplineObject::Alloc(splinePoints.GetCount(),SPLINETYPE_AKIMA);
         if (!spline) continue;
         spline->GetDataInstance()->SetBool(SPLINEOBJECT_CLOSED, FALSE);
