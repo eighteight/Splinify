@@ -90,8 +90,10 @@ void SplinifyData::DoRecursion(BaseObject *op, BaseObject *child, GeDynamicArray
 BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 {
     BaseDocument *doc = op->GetDocument();
-    LONG start = doc->GetTime().GetFrame(doc->GetFps());
+    LONG crntFrame = doc->GetTime().GetFrame(doc->GetFps());
     LONG delta = 5;
+    LONG strtFrame = crntFrame - delta;
+    strtFrame = strtFrame<0?0:strtFrame;
     // start new list
 	op->NewDependenceList();
     
@@ -107,8 +109,11 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
             if (pp) {
                 BaseObject* chld = NULL;
                 LONG cnt = 0;
-                for (chld=pp->GetDown(); chld && cnt < delta; chld=chld->GetNext()) {
-                    children.Push(op->GetHierarchyClone(hh,chld,HIERARCHYCLONEFLAGS_ASPOLY,FALSE,NULL));
+                for (chld=pp->GetDownLast(); chld; chld=chld->GetPred()) {
+                    if (cnt > strtFrame && cnt<= crntFrame){
+                        children.Push(op->GetHierarchyClone(hh,chld,HIERARCHYCLONEFLAGS_ASPOLY,FALSE,NULL));
+                    }
+
                     cnt++;
                 }
             }
