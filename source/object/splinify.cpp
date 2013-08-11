@@ -91,7 +91,7 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 {
     BaseDocument *doc = op->GetDocument();
     LONG crntFrame = doc->GetTime().GetFrame(doc->GetFps());
-    LONG delta = 5;
+    LONG delta = 30;
     LONG strtFrame = crntFrame - delta;
     strtFrame = strtFrame<0?0:strtFrame;
     // start new list
@@ -113,7 +113,6 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
                     if (cnt > strtFrame && cnt<= crntFrame){
                         children.Push(op->GetHierarchyClone(hh,chld,HIERARCHYCLONEFLAGS_ASPOLY,FALSE,NULL));
                     }
-
                     cnt++;
                 }
             }
@@ -158,26 +157,30 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
         KDNode *kdTree;
         buildKDTree(chldPoints[k], &kdTree, rng);
         trees[k] = kdTree;
-        validPoints[k] = GeDynamicArray<LONG>(chldPoints[k].GetCount());
-        for (LONG i=0; i < chldPoints[k].GetCount(); i++){
-            validPoints[k][i] = 1;
-        }
         if (maxPointCnt < chldPoints[k].GetCount()){
             maxPointCnt = chldPoints[k].GetCount();
         }
     }
+    
+    for (int k=0; k < child_cnt; k++){
+        validPoints[k] = GeDynamicArray<LONG>(maxPointCnt);
+        for (LONG i=0; i < maxPointCnt; i++){
+            validPoints[k][i] = 1;
+        }
+    }
+    
 
     StatusSetBar(5);
     StatusSetText("Connecting Points");
     Real distMin = MAXREALr;
     Real distMax = 0.;
-    GeDynamicArray<GeDynamicArray<Vector> > splinePointsM;
+    //GeDynamicArray<GeDynamicArray<Vector> > splinePointsM;
     for (LONG i = 0; i < maxPointCnt; i++){
         GeDynamicArray<Vector> splinePoints;
         Vector prvs;
         
         for (int k=0; k < child_cnt-1; k++){
-            if (chldPoints[k].GetCount() < i || chldPoints[k+1].GetCount()<i) continue;
+            if (chldPoints[k].GetCount() < i || chldPoints[k+1].GetCount()<i || validPoints[k].GetCount()<i) continue;
 
             validPoints[k][0] = 0;
             
@@ -205,7 +208,7 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
         }
         
         if (splinePoints.GetCount() == 0) continue;
-        splinePointsM.Push(splinePoints);
+       // splinePointsM.Push(splinePoints);
         SplineObject	*spline=SplineObject::Alloc(splinePoints.GetCount(),SPLINETYPE_AKIMA);
         if (!spline) continue;
         spline->GetDataInstance()->SetBool(SPLINEOBJECT_CLOSED, FALSE);
@@ -224,11 +227,13 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
             }
         }
     }
-    GePrint("dist: "+RealToString(distMin)+":"+RealToString(distMax));
+    GePrint(LongToString(crntFrame)+ " dist: "+RealToString(distMin)+":"+RealToString(distMax));
     
     for (int k=0; k<child_cnt; k++){
         GeFree(trees[k]);
-        BaseObject::Free(children[k]);
+        if (children[k]){
+            BaseObject::Free(children[k]);
+        }
     }
     
     main->Message(MSG_UPDATE);
