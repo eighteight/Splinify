@@ -22,6 +22,7 @@ class SplinifyData : public ObjectData
 		void DoRecursion(BaseObject *op, BaseObject *child, GeDynamicArray<Vector> &points, Matrix ml);
         Random rng;
         Bool isCalculated;
+        GeDynamicArray<GeDynamicArray<Vector> > splinePointsM;
 	public:
 		virtual BaseObject* GetVirtualObjects(BaseObject *op, HierarchyHelp *hh);
 		virtual Bool Init(GeListNode *node);
@@ -135,7 +136,7 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 	if (!dirty) return op->GetCache(hh);
     
     GePrint("NO CACHE");
-
+    splinePointsM.FreeArray();
     Real maxSeg = data->GetReal(CTTSPOBJECT_MAXSEG,30.);
 	Bool relativeMaxSeg  = data->GetBool(CTTSPOBJECT_REL,TRUE);
     LONG splineInterpolation = data->GetLong(SPLINEOBJECT_INTERPOLATION);
@@ -174,7 +175,7 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     StatusSetText("Connecting Points");
     Real distMin = MAXREALr;
     Real distMax = 0.;
-    //GeDynamicArray<GeDynamicArray<Vector> > splinePointsM;
+
     for (LONG i = 0; i < maxPointCnt; i++){
         GeDynamicArray<Vector> splinePoints;
         Vector prvs;
@@ -207,8 +208,8 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
             prvs = closest;
         }
         
-        if (splinePoints.GetCount() == 0) continue;
-       // splinePointsM.Push(splinePoints);
+        if (splinePoints.GetCount() == 0||splinePoints.GetCount()<25) continue;
+        splinePointsM.Push(splinePoints);
         SplineObject	*spline=SplineObject::Alloc(splinePoints.GetCount(),SPLINETYPE_AKIMA);
         if (!spline) continue;
         spline->GetDataInstance()->SetBool(SPLINEOBJECT_CLOSED, FALSE);
@@ -227,7 +228,7 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
             }
         }
     }
-    GePrint(LongToString(crntFrame)+ " dist: "+RealToString(distMin)+":"+RealToString(distMax));
+    GePrint(LongToString(strtFrame)+"-"+LongToString(crntFrame)+ ":"+LongToString(splinePointsM.GetCount())+" dist: "+RealToString(distMin)+":"+RealToString(distMax));
     
     for (int k=0; k<child_cnt; k++){
         GeFree(trees[k]);
