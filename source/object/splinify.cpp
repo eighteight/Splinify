@@ -23,6 +23,8 @@ class SplinifyData : public ObjectData
         Random rng;
         Bool isCalculated;
         GeDynamicArray<GeDynamicArray<Vector> > splinePointsM;
+        GeDynamicArray<LONG> crntTracks, prvTracks;
+        LONG prvsFrame = 0;
 	public:
 		virtual BaseObject* GetVirtualObjects(BaseObject *op, HierarchyHelp *hh);
 		virtual Bool Init(GeListNode *node);
@@ -109,12 +111,13 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
             BaseObject* pp = (BaseObject*)traceElements->ObjectFromIndex(op->GetDocument(),i);
             if (pp) {
                 BaseObject* chld = NULL;
-                LONG cnt = 0;
+                LONG trck = 0;
                 for (chld=pp->GetDownLast(); chld; chld=chld->GetPred()) {
-                    if (cnt > strtFrame && cnt<= crntFrame){
+                    if (trck > strtFrame && trck<= crntFrame){
                         children.Push(op->GetHierarchyClone(hh,chld,HIERARCHYCLONEFLAGS_ASPOLY,FALSE,NULL));
+                        crntTracks.Push(trck);
                     }
-                    cnt++;
+                    trck++;
                 }
             }
             if (i == 0) break; //consider only one child
@@ -165,11 +168,8 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     
     for (int k=0; k < child_cnt; k++){
         validPoints[k] = GeDynamicArray<LONG>(maxPointCnt);
-        for (LONG i=0; i < maxPointCnt; i++){
-            validPoints[k][i] = 1;
-        }
+        validPoints[k].Fill(0,maxPointCnt,1);
     }
-    
 
     StatusSetBar(5);
     StatusSetText("Connecting Points");
@@ -186,6 +186,7 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
             validPoints[k][0] = 0;
             
             prvs = k==0? chldPoints[k][i]:prvs;
+            //prvs = k==0?chldPoints[k][i]:splinePointsM[k-1][i];
 
             Real dist = -1.;
             LONG closestIndx = trees[k+1]->getNearestNeighbor(chldPoints[k+1], prvs, validPoints[k], dist, 0);
@@ -208,7 +209,7 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
             prvs = closest;
         }
         
-        if (splinePoints.GetCount() == 0||splinePoints.GetCount()<25) continue;
+        if (splinePoints.GetCount() == 0||splinePoints.GetCount()<10) continue;
         splinePointsM.Push(splinePoints);
         SplineObject	*spline=SplineObject::Alloc(splinePoints.GetCount(),SPLINETYPE_AKIMA);
         if (!spline) continue;
@@ -236,7 +237,7 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
             BaseObject::Free(children[k]);
         }
     }
-    
+    prvTracks = crntTracks;
     main->Message(MSG_UPDATE);
 	StatusClear();
 	return main;
