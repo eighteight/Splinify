@@ -94,7 +94,9 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 {
     BaseDocument *doc = op->GetDocument();
     LONG crntFrame = doc->GetTime().GetFrame(doc->GetFps());
-    LONG delta = 30;
+    
+    BaseContainer *data = op->GetDataInstance();
+    LONG delta = data->GetLong(CTTSPOBJECT_WINDOW,1);
     LONG strtFrame = crntFrame - delta;
     strtFrame = strtFrame<0?0:strtFrame;
     // start new list
@@ -103,7 +105,7 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 	// check cache for validity and check master object for changes
 	Bool dirty = op->CheckCache(hh) || op->IsDirty(DIRTYFLAGS_DATA);
     
-    BaseContainer *data = op->GetDataInstance();
+
     InExcludeData* traceElements = (InExcludeData*)data->GetCustomDataType(TRACE_ELEMENTS, CUSTOMDATATYPE_INEXCLUDE_LIST);
     GeDynamicArray<BaseObject*> children;
     if(traceElements && traceElements->GetObjectCount()>0) {
@@ -142,6 +144,7 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     splinesForPoint.FreeArray();
     Real maxSeg = data->GetReal(CTTSPOBJECT_MAXSEG,30.);
 	Bool relativeMaxSeg  = data->GetBool(CTTSPOBJECT_REL,TRUE);
+    LONG delayWindow = data->GetLong(CTTSPOBJECT_WINDOW,1);
     LONG splineInterpolation = data->GetLong(SPLINEOBJECT_INTERPOLATION);
 
     BaseThread    *bt=hh->GetThread();
@@ -178,35 +181,43 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 
     for (LONG i = 0; i < maxPointCnt; i++){
         GeDynamicArray<Vector> splineArray;
-        Vector closestPoint;
+        Vector queryPoint;
         
         for (int k=0; k < child_cnt-1; k++){
-            if (chldPoints[k].GetCount() < i || chldPoints[k+1].GetCount()<i || validPoints[k].GetCount()<i) continue;
+            if (chldPoints[k].GetCount() < i || chldPoints[k+1].GetCount()<i || validPoints[k].GetCount()<i) {
+                continue;
+            }
 
             validPoints[k][0] = 0;
             
             //closestPoint = k==0? chldPoints[k][i]:closestPoint;
-            closestPoint = k==0 || splineArray.GetCount() == 0? chldPoints[k][i]:splineArray[splineArray.GetCount()-1];
+//            if (k == 0 || splineArray.GetCount() == 0 || splinesForPoint.GetCount() <= i){
+//                queryPoint = chldPoints[k][i];
+//            } else {
+//                //get previous closest point for this i
+//                GeDynamicArray<Vector>   temp = splinesForPoint[i];
+//                queryPoint = temp[temp.GetCount()-1];
+//            }
+            queryPoint = k==0 || splineArray.GetCount() == 0? chldPoints[k][i]:splineArray[splineArray.GetCount()-1];
 
             Real dist = -1.;
-            LONG closestIndx = trees[k+1]->getNearestNeighbor(chldPoints[k+1], closestPoint, validPoints[k], dist, 0);
+            LONG closestIndx = trees[k+1]->getNearestNeighbor(chldPoints[k+1], queryPoint, validPoints[k], dist, 0);
             if(closestIndx == -1){
                 GePrint("error finding neighbor");
-                //continue;
-                break;
+                continue;
             }
             
             distMin = distMin<dist?distMin:dist;
             distMax = distMax>dist?distMax:dist;
             
             if (dist > maxSeg || dist < 0.01) {
-                //continue;
-                break;
+                continue;
+                //break;
             }
             validPoints[k][closestIndx] = 0;
             
-            closestPoint = chldPoints[k+1][closestIndx];
-            splineArray.Push(closestPoint);
+            queryPoint = chldPoints[k+1][closestIndx];
+            splineArray.Push(queryPoint);
         }
         
         if (splineArray.GetCount() == 0||splineArray.GetCount()<10) continue;
