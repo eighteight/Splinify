@@ -22,7 +22,7 @@ class SplinifyData : public ObjectData
 		void DoRecursion(BaseObject *op, BaseObject *child, GeDynamicArray<Vector> &points, Matrix ml);
         Random rng;
         Bool isCalculated;
-        GeDynamicArray<GeDynamicArray<Vector> > splinePointsM;
+        GeDynamicArray<GeDynamicArray<Vector> > splinesForPoint;
         GeDynamicArray<LONG> crntTracks, prvTracks;
         LONG prvsFrame = 0;
 	public:
@@ -139,7 +139,7 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
 	if (!dirty) return op->GetCache(hh);
     
     GePrint("NO CACHE");
-    splinePointsM.FreeArray();
+    splinesForPoint.FreeArray();
     Real maxSeg = data->GetReal(CTTSPOBJECT_MAXSEG,30.);
 	Bool relativeMaxSeg  = data->GetBool(CTTSPOBJECT_REL,TRUE);
     LONG splineInterpolation = data->GetLong(SPLINEOBJECT_INTERPOLATION);
@@ -177,46 +177,46 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     Real distMax = 0.;
 
     for (LONG i = 0; i < maxPointCnt; i++){
-        GeDynamicArray<Vector> splinePoints;
-        Vector prvs;
+        GeDynamicArray<Vector> splineArray;
+        Vector closestPoint;
         
         for (int k=0; k < child_cnt-1; k++){
             if (chldPoints[k].GetCount() < i || chldPoints[k+1].GetCount()<i || validPoints[k].GetCount()<i) continue;
 
             validPoints[k][0] = 0;
             
-            prvs = k==0? chldPoints[k][i]:prvs;
-            //prvs = k==0?chldPoints[k][i]:splinePointsM[k-1][i];
+            //closestPoint = k==0? chldPoints[k][i]:closestPoint;
+            closestPoint = k==0 || splineArray.GetCount() == 0? chldPoints[k][i]:splineArray[splineArray.GetCount()-1];
 
             Real dist = -1.;
-            LONG closestIndx = trees[k+1]->getNearestNeighbor(chldPoints[k+1], prvs, validPoints[k], dist, 0);
+            LONG closestIndx = trees[k+1]->getNearestNeighbor(chldPoints[k+1], closestPoint, validPoints[k], dist, 0);
             if(closestIndx == -1){
                 GePrint("error finding neighbor");
-                continue;
+                //continue;
+                break;
             }
             
             distMin = distMin<dist?distMin:dist;
             distMax = distMax>dist?distMax:dist;
             
-            if (dist> maxSeg || dist < 0.01) {
-                continue;
+            if (dist > maxSeg || dist < 0.01) {
+                //continue;
+                break;
             }
             validPoints[k][closestIndx] = 0;
             
-            Vector closest = chldPoints[k+1][closestIndx];
-            if (k==0) splinePoints.Push(prvs);
-            splinePoints.Push(closest);
-            prvs = closest;
+            closestPoint = chldPoints[k+1][closestIndx];
+            splineArray.Push(closestPoint);
         }
         
-        if (splinePoints.GetCount() == 0||splinePoints.GetCount()<10) continue;
-        splinePointsM.Push(splinePoints);
-        SplineObject	*spline=SplineObject::Alloc(splinePoints.GetCount(),SPLINETYPE_AKIMA);
+        if (splineArray.GetCount() == 0||splineArray.GetCount()<10) continue;
+        splinesForPoint.Push(splineArray);
+        SplineObject	*spline=SplineObject::Alloc(splineArray.GetCount(),SPLINETYPE_AKIMA);
         if (!spline) continue;
         spline->GetDataInstance()->SetBool(SPLINEOBJECT_CLOSED, FALSE);
         Vector *padr = spline->GetPointW();
-        for (LONG l=0;l<splinePoints.GetCount();l++){
-            padr[l] = splinePoints[l];
+        for (LONG l=0;l<splineArray.GetCount();l++){
+            padr[l] = splineArray[l];
         }
         spline->InsertUnder(main);
         spline->Message(MSG_UPDATE);
@@ -229,7 +229,7 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
             }
         }
     }
-    GePrint(LongToString(strtFrame)+"-"+LongToString(crntFrame)+ ":"+LongToString(splinePointsM.GetCount())+" dist: "+RealToString(distMin)+":"+RealToString(distMax));
+    GePrint(LongToString(strtFrame)+"-"+LongToString(crntFrame)+ ":"+LongToString(splinesForPoint.GetCount())+" dist: "+RealToString(distMin)+":"+RealToString(distMax));
     
     for (int k=0; k<child_cnt; k++){
         GeFree(trees[k]);
