@@ -32,11 +32,24 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "source/object/splinify.cpp"
-         timestampString = "398065961.73244"
+         timestampString = "398149519.28355"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "147"
-         endingLineNumber = "147"
+         startingLineNumber = "145"
+         endingLineNumber = "145"
+         landmarkName = "SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)"
+         landmarkType = "5">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "source/object/splinify.cpp"
+         timestampString = "398150905.510774"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "202"
+         endingLineNumber = "202"
          landmarkName = "SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)"
          landmarkType = "5">
       </FileBreakpoint>
