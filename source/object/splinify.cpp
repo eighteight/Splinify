@@ -103,7 +103,6 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     
 	// check cache for validity and check master object for changes
 	Bool dirty = op->CheckCache(hh) || op->IsDirty(DIRTYFLAGS_DATA);
-    
 
     InExcludeData* traceElements = (InExcludeData*)data->GetCustomDataType(TRACE_ELEMENTS, CUSTOMDATATYPE_INEXCLUDE_LIST);
     GeDynamicArray<BaseObject*> children;
@@ -152,7 +151,7 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     StatusSetText("Collecting Points");
     GeDynamicArray<KDNode*> trees(child_cnt);
     GeDynamicArray<GeDynamicArray<Vector> > chldPoints(child_cnt);
-    GeDynamicArray<GeDynamicArray<LONG> > validPoints(child_cnt);
+
     rng.Init(1244);
     
     LONG maxPointCnt = 0;
@@ -166,11 +165,6 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
             maxPointCnt = chldPoints[k].GetCount();
         }
     }
-    
-    for (int k=0; k < child_cnt; k++){
-        validPoints[k] = GeDynamicArray<LONG>(maxPointCnt);
-        validPoints[k].Fill(0,maxPointCnt,1);
-    }
 
     StatusSetBar(5);
     StatusSetText("Connecting Points");
@@ -178,7 +172,7 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     Real distMin = MAXREALr;
     Real distMax = 0.;
 
-    splineAtPoint.FreeArray();
+    //splineAtPoint.FreeArray();
     
     LONG shift = crntFrame - prvsFrame;
     shift = shift < 0? 0: shift;
@@ -187,22 +181,28 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
         splineAtPoint[i].Shift(0, -shift);
         splineAtPoint[i].ReSize(splineAtPoint[i].GetCount() - shift);
     }
-
+    
+    LONG startChild = prvsFrame == 0? 0: child_cnt - shift - 3;
+    startChild = startChild < 0? 0 : startChild;
+    Real avSplineSize = 0;
     for (LONG i = 0; i < maxPointCnt; i++){
         if (splineAtPoint.GetCount() == i) {
             splineAtPoint.Push(GeDynamicArray<Vector>());
         }
         
-        for (int k=0; k < child_cnt-1; k++){
-            if (chldPoints[k].GetCount() < i || chldPoints[k+1].GetCount()<i || validPoints[k].GetCount()<i) {
+        GeDynamicArray<LONG> validPoints(maxPointCnt);
+        validPoints.Fill(0,maxPointCnt,1);
+        
+        for (int k=startChild; k < child_cnt-1; k++){
+            if (chldPoints[k].GetCount() < i || chldPoints[k+1].GetCount()<i) {
                 continue;
             }
 
-            validPoints[k][0] = 0;
+            //validPoints[0] = 0;
             Vector queryPoint = splineAtPoint[i].GetCount() == 0? chldPoints[k][i]:splineAtPoint[i][splineAtPoint[i].GetCount()-1];
 
             Real dist = -1.;
-            LONG closestIndx = trees[k+1]->getNearestNeighbor(chldPoints[k+1], queryPoint, validPoints[k], dist, 0);
+            LONG closestIndx = trees[k+1]->getNearestNeighbor(chldPoints[k+1], queryPoint, validPoints, dist, 0);
             if(closestIndx == -1){
                 GePrint("error finding neighbor");
                 continue;
@@ -214,9 +214,13 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
             if (dist > maxSeg || dist < 0.01) {
                 continue;
             }
-            validPoints[k][closestIndx] = 0;
-
-            splineAtPoint[i].Push(chldPoints[k+1][closestIndx]);
+            validPoints[closestIndx] = 0;
+            Vector tmp = chldPoints[k+1][closestIndx];
+            
+            VLONG fff = splineAtPoint[i].Find(tmp);
+            if (fff == NOTOK){
+                splineAtPoint[i].Push(chldPoints[k+1][closestIndx]);
+            }
         }
         
         if (splineAtPoint[i].GetCount() == 0||splineAtPoint[i].GetCount()<10) continue;
@@ -230,7 +234,7 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
         }
         spline->InsertUnder(main);
         spline->Message(MSG_UPDATE);
-        
+        avSplineSize += splineAtPoint[i].GetCount();
         if(i % 20 == 0){
             StatusSetBar(10 + (90*i)/maxPointCnt);
             if (bt && bt->TestBreak()){
@@ -239,7 +243,7 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
             }
         }
     }
-    GePrint(LongToString(strtFrame)+"-"+LongToString(crntFrame)+ ":"+LongToString(splineAtPoint.GetCount())+" dist: "+RealToString(distMin)+":"+RealToString(distMax));
+    GePrint(LongToString(strtFrame)+"-"+LongToString(crntFrame)+ ":"+RealToString(avSplineSize/splineAtPoint.GetCount())+"-"+LongToString(splineAtPoint.GetCount())+" dist: "+RealToString(distMin)+":"+RealToString(distMax));
     
     for (int k=0; k<child_cnt; k++){
         GeFree(trees[k]);
