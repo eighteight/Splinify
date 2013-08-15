@@ -189,7 +189,7 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
         
         GeDynamicArray<LONG> validPoints(maxPointCnt);
         validPoints.Fill(0,maxPointCnt,1);
-        std::cout<<splineAtPoint[i].GetCount()<<" ";
+
         for (int k=startChild; k < child_cnt-1; k++){
             if (chldPoints[k].GetCount() < i || chldPoints[k+1].GetCount()<i) {
                 continue;
@@ -204,8 +204,8 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
                 continue;
             }
             
-            distMin = distMin<dist?distMin:dist;
-            distMax = distMax>dist?distMax:dist;
+            distMin = distMin < dist ? distMin : dist;
+            distMax = distMax > dist ? distMax : dist;
             
             if (dist > maxSeg || dist < 0.01) {
                 continue;
@@ -218,11 +218,11 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
                 splineAtPoint[i].Push(chldPoints[k+1][closestIndx]);
             }
         }
-        std::cout<<splineAtPoint[i].GetCount()<<std::endl;
         if (splineAtPoint[i].GetCount() == 0||splineAtPoint[i].GetCount()<10) continue;
         
         SplineObject	*spline=SplineObject::Alloc(splineAtPoint[i].GetCount(),SPLINETYPE_LINEAR);
         if (!spline) continue;
+       
         spline->GetDataInstance()->SetBool(SPLINEOBJECT_CLOSED, FALSE);
         Vector *padr = spline->GetPointW();
         for (LONG l=0;l<splineAtPoint[i].GetCount();l++){
