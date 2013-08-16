@@ -108,11 +108,11 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     GeDynamicArray<BaseObject*> children;
     if(traceElements && traceElements->GetObjectCount()>0) {
         for(int i=0; i<traceElements->GetObjectCount(); ++i) {
-            BaseObject* pp = (BaseObject*)traceElements->ObjectFromIndex(op->GetDocument(),i);
-            if (pp) {
+            BaseObject* container = (BaseObject*)traceElements->ObjectFromIndex(op->GetDocument(),i);
+            if (container) {
                 BaseObject* chld = NULL;
                 LONG trck = 0;
-                for (chld=pp->GetDownLast(); chld; chld=chld->GetPred()) {
+                for (chld=container->GetDownLast(); chld; chld=chld->GetPred()) {
                     if (trck > strtFrame && trck<= crntFrame){
                         children.Push(op->GetHierarchyClone(hh,chld,HIERARCHYCLONEFLAGS_ASPOLY,FALSE,NULL));
                     }
@@ -181,7 +181,9 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
         splineAtPoint[i].ReSize(splineAtPoint[i].GetCount() - shift);
     }
 
+    SplineObject* emptySpline = SplineObject::Alloc(0, SPLINETYPE_LINEAR);
     Real avSplineSize = 0;
+    VLONG pcnt = 0;
     for (LONG i = 0; i < maxPointCnt; i++){
         if (splineAtPoint.GetCount() == i) {
             splineAtPoint.Push(GeDynamicArray<Vector>());
@@ -215,21 +217,25 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
             
             VLONG fff = splineAtPoint[i].Find(tmp);
             if (fff == NOTOK){
-                splineAtPoint[i].Push(chldPoints[k+1][closestIndx]);
+                splineAtPoint[i].Push(tmp);
             }
         }
         if (splineAtPoint[i].GetCount() == 0||splineAtPoint[i].GetCount()<10) continue;
         
         SplineObject	*spline=SplineObject::Alloc(splineAtPoint[i].GetCount(),SPLINETYPE_LINEAR);
         if (!spline) continue;
-       
         spline->GetDataInstance()->SetBool(SPLINEOBJECT_CLOSED, FALSE);
+        
         Vector *padr = spline->GetPointW();
         for (LONG l=0;l<splineAtPoint[i].GetCount();l++){
             padr[l] = splineAtPoint[i][l];
         }
-        spline->InsertUnder(main);
+        pcnt += splineAtPoint[i].GetCount();
+        //spline->InsertUnder(main);
         spline->Message(MSG_UPDATE);
+        
+        spline->InsertUnder(emptySpline);
+        
         avSplineSize += splineAtPoint[i].GetCount();
         if(i % 20 == 0){
             StatusSetBar(10 + (90*i)/maxPointCnt);
@@ -241,6 +247,53 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     }
     GePrint("points: "+RealToString(avSplineSize/splineAtPoint.GetCount())+"-"+LongToString(splineAtPoint.GetCount())+" dist: "+RealToString(distMin)+":"+RealToString(distMax));
     
+    
+    ModelingCommandData mcd;
+    
+    mcd.doc = doc;
+    
+    mcd.op = emptySpline;
+    
+    if(!SendModelingCommand(MCOMMAND_JOIN, mcd)){
+        return NULL;
+    }
+    
+    for (int k=0; k<child_cnt; k++){
+        GeFree(trees[k]);
+        if (children[k]){
+            BaseObject::Free(children[k]);
+        }
+    }
+    prvsFrame = crntFrame;
+	StatusClear();
+    
+    return ToSpline(mcd.result->GetIndex(0L));
+        
+//        BaseObject *newOp = static_cast<BaseObject*>(mcd.result->GetIndex(0));
+
+
+    /////////////////
+    GeDynamicArray<LONG> segments;
+	SplineObject	*pp= SplineObject::Alloc(0,SPLINETYPE_LINEAR);
+	if (!pp) return NULL;
+    pp->ResizeObject(pcnt,segments.GetCount());
+    
+    Segment* seg = pp->GetSegmentW();
+    for(LONG i=0;i<segments.GetCount();i++){
+        seg[i].cnt = segments[i];
+        seg[i].closed = FALSE;
+    }
+    
+    Vector *padr=pp->GetPointW();
+    VLONG j = 0;
+    for (LONG i = 0; i < splineAtPoint.GetCount(); i++){
+        for (LONG k = 0; k < splineAtPoint[i].GetCount(); k++){
+            padr[j++] = splineAtPoint[i][k];
+        }
+    }
+
+    //////////////////
+    
     for (int k=0; k<child_cnt; k++){
         GeFree(trees[k]);
         if (children[k]){
@@ -250,7 +303,8 @@ BaseObject *SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)
     main->Message(MSG_UPDATE);
     prvsFrame = crntFrame;
 	StatusClear();
-	return main;
+    return pp;
+	//return main;
 Error:
     for (int i = 0; i < children.GetCount(); i++){
         BaseObject::Free(children[i]);
