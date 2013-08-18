@@ -4,29 +4,29 @@
    version = "1.0">
    <FileBreakpoints>
       <FileBreakpoint
-         shouldBeEnabled = "No"
+         shouldBeEnabled = "Yes"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "source/object/splinify.cpp"
-         timestampString = "398479886.554559"
+         timestampString = "398536019.890979"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "197"
-         endingLineNumber = "197"
-         landmarkName = "SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocument *doc, GeDynamicArray&lt;BaseObject*&gt; children, Real maxSeg)"
+         startingLineNumber = "166"
+         endingLineNumber = "166"
+         landmarkName = "SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocument *doc, GeDynamicArray&lt;BaseObject*&gt; &amp;children, Real maxSeg)"
          landmarkType = "5">
       </FileBreakpoint>
       <FileBreakpoint
-         shouldBeEnabled = "No"
+         shouldBeEnabled = "Yes"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "source/object/splinify.cpp"
-         timestampString = "398479886.554559"
+         timestampString = "398536019.890979"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "185"
-         endingLineNumber = "185"
-         landmarkName = "SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocument *doc, GeDynamicArray&lt;BaseObject*&gt; children, Real maxSeg)"
+         startingLineNumber = "267"
+         endingLineNumber = "267"
+         landmarkName = "SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocument *doc, GeDynamicArray&lt;BaseObject*&gt; &amp;children, Real maxSeg)"
          landmarkType = "5">
       </FileBreakpoint>
    </FileBreakpoints>

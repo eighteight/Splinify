@@ -23,10 +23,9 @@ class SplinifyData : public ObjectData
 		void Transform(PointObject *op, const Matrix &m);
 		void DoRecursion(BaseObject *op, BaseObject *child, GeDynamicArray<Vector> &points, Matrix ml);
         Random rng;
-        Bool isCalculated;
         GeDynamicArray<GeDynamicArray<Vector> > splineAtPoint;
         LONG prvsFrame = 0, oldFrame;
-        SplineObject* GetSpline(BaseObject* op, BaseThread* bt, BaseDocument *doc, GeDynamicArray<BaseObject*> children, Real maxSeg);
+        SplineObject* GetSpline(BaseObject* op, BaseThread* bt, BaseDocument *doc, GeDynamicArray<BaseObject*> &children, Real maxSeg);
     
 	public:
 		virtual SplineObject* GetContour(BaseObject *op, BaseDocument *doc, Real lod, BaseThread *bt);
@@ -56,7 +55,6 @@ Bool SplinifyData::Init(GeListNode *node)
 	data->SetReal(CTTSPOBJECT_MAXSEG,30.);
 	data->SetBool(CTTSPOBJECT_REL,TRUE);
     data->SetLong(SPLINEOBJECT_INTERPOLATION,SPLINEOBJECT_INTERPOLATION_ADAPTIVE);
-    isCalculated = FALSE;
     GePrint("Splinify by http://twitter.com/eight_io for Cinema 4D r14");
     
     LONG i;
@@ -159,17 +157,17 @@ SplineObject* SplinifyData::GetContour(BaseObject *op, BaseDocument *doc, Real l
         }
         trck++;
     }
+    if (children.GetCount() < 2) return NULL;
 
     return GetSpline(op, bt, doc, children, maxSeg);
 }
 
-SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocument *doc, GeDynamicArray<BaseObject*> children, Real maxSeg){
+SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocument *doc, GeDynamicArray<BaseObject*> &children, Real maxSeg){
     LONG child_cnt = children.GetCount();
     BaseContainer *data = op->GetDataInstance();
     
     LONG splineInterpolation = data->GetLong(SPLINEOBJECT_INTERPOLATION);
-    
-    isCalculated = TRUE;
+
 	StatusSetBar(0);
     StatusSetText("Collecting Points");
     GeDynamicArray<KDNode*> trees(child_cnt);
@@ -200,15 +198,13 @@ SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocume
     Real distMin = MAXREALr;
     Real distMax = 0.;
     
-    //splineAtPoint.FreeArray();
-    
     for (LONG i = 0; i < splineAtPoint.GetCount(); i++){
         splineAtPoint[i].Shift(0, -shift);
         splineAtPoint[i].ReSize(splineAtPoint[i].GetCount() - shift);
     }
     
-    SplineObject* emptySpline = SplineObject::Alloc(0, SPLINETYPE_LINEAR);
-    Real avSplineSize = 0;
+    SplineObject* emptySpline = SplineObject::Alloc(0, SPLINETYPE_AKIMA);
+    Real avSplineSize = 0.0;
     VLONG pcnt = 0;
     for (LONG i = 0; i < maxPointCnt; i++){
         if (splineAtPoint.GetCount() == i) {
@@ -245,7 +241,7 @@ SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocume
                 splineAtPoint[i].Push(clsst);
             }
         }
-        if (splineAtPoint[i].GetCount() == 0||splineAtPoint[i].GetCount()<10) continue;
+        if (splineAtPoint[i].GetCount() == 0||splineAtPoint[i].GetCount()<child_cnt-20) continue;
         
         SplineObject	*spline=SplineObject::Alloc(splineAtPoint[i].GetCount(),SPLINETYPE_LINEAR);
         if (!spline) continue;
@@ -268,15 +264,8 @@ SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocume
             }
         }
     }
-    GePrint("points: "+RealToString(avSplineSize/splineAtPoint.GetCount())+"-"+LongToString(splineAtPoint.GetCount())+" dist: "+RealToString(distMin)+":"+RealToString(distMax));
-    
-    ModelingCommandData mcd;
-    mcd.doc = doc;
-    mcd.op = emptySpline;
-    
-    if(!SendModelingCommand(MCOMMAND_JOIN, mcd)){
-        return NULL;
-    }
+    String sizeAvg = splineAtPoint.GetCount() == 0? "Nan":RealToString(avSplineSize/splineAtPoint.GetCount());
+    GePrint("length: "+sizeAvg+" P:"+LongToString(splineAtPoint.GetCount())+" dist: "+RealToString(distMin)+":"+RealToString(distMax));
     
     for (int k=0; k<child_cnt; k++){
         GeFree(trees[k]);
@@ -286,6 +275,16 @@ SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocume
     }
     prvsFrame = crntFrame;
 	StatusClear();
+    
+    if (avSplineSize == 0.0) return NULL;
+    
+    ModelingCommandData mcd;
+    mcd.doc = doc;
+    mcd.op = emptySpline;
+    
+    if(!SendModelingCommand(MCOMMAND_JOIN, mcd)){
+        return NULL;
+    }
     
     return ToSpline(mcd.result->GetIndex(0L));
     
