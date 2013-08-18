@@ -13,13 +13,12 @@
 #include "c4d.h"
 #include <string.h>
 
-Bool RegisterPointGenerator(void);
-Bool RegisterTSP(void);
+Bool RegisterSplinify(void);
 
 
 Bool PluginStart(void)
 {
-	if (!RegisterTSP()) return FALSE;
+	if (!RegisterSplinify()) return FALSE;
 
 	return TRUE;
 }

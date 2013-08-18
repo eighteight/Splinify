@@ -7,24 +7,13 @@
          shouldBeEnabled = "No"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
-         filePath = "source/object/tsp.cpp"
-         timestampString = "397624299.625255"
+         filePath = "source/object/splinify.cpp"
+         timestampString = "398479886.554559"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "89"
-         endingLineNumber = "89">
-      </FileBreakpoint>
-      <FileBreakpoint
-         shouldBeEnabled = "No"
-         ignoreCount = "0"
-         continueAfterRunningActions = "No"
-         filePath = "source/object/tsp.cpp"
-         timestampString = "397627720.929996"
-         startingColumnNumber = "9223372036854775807"
-         endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "163"
-         endingLineNumber = "163"
-         landmarkName = "TSPData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)"
+         startingLineNumber = "197"
+         endingLineNumber = "197"
+         landmarkName = "SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocument *doc, GeDynamicArray&lt;BaseObject*&gt; children, Real maxSeg)"
          landmarkType = "5">
       </FileBreakpoint>
       <FileBreakpoint
@@ -32,25 +21,12 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "source/object/splinify.cpp"
-         timestampString = "398326127.713782"
+         timestampString = "398479886.554559"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "200"
-         endingLineNumber = "200"
-         landmarkName = "SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)"
-         landmarkType = "5">
-      </FileBreakpoint>
-      <FileBreakpoint
-         shouldBeEnabled = "No"
-         ignoreCount = "0"
-         continueAfterRunningActions = "No"
-         filePath = "source/object/splinify.cpp"
-         timestampString = "398224479.773509"
-         startingColumnNumber = "9223372036854775807"
-         endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "159"
-         endingLineNumber = "159"
-         landmarkName = "SplinifyData::GetVirtualObjects(BaseObject *op, HierarchyHelp *hh)"
+         startingLineNumber = "185"
+         endingLineNumber = "185"
+         landmarkName = "SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocument *doc, GeDynamicArray&lt;BaseObject*&gt; children, Real maxSeg)"
          landmarkType = "5">
       </FileBreakpoint>
    </FileBreakpoints>
