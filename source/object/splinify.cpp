@@ -158,6 +158,10 @@ SplineObject* SplinifyData::GetContour(BaseObject *op, BaseDocument *doc, Real l
         trck++;
     }
     if (children.GetCount() < 2) return NULL;
+    
+    if (children.GetCount() < delta && prvsFrame > crntFrame) {
+        splineAtPoint.FreeArray();
+    }
 
     return GetSpline(op, bt, doc, children, maxSeg);
 }
@@ -241,7 +245,7 @@ SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocume
                 splineAtPoint[i].Push(clsst);
             }
         }
-        if (splineAtPoint[i].GetCount() == 0||splineAtPoint[i].GetCount()<child_cnt-20) continue;
+        if (splineAtPoint[i].GetCount() == 0/*||splineAtPoint[i].GetCount()<child_cnt-20*/) continue;
         
         SplineObject	*spline=SplineObject::Alloc(splineAtPoint[i].GetCount(),SPLINETYPE_LINEAR);
         if (!spline) continue;
@@ -265,7 +269,8 @@ SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocume
         }
     }
     String sizeAvg = splineAtPoint.GetCount() == 0? "Nan":RealToString(avSplineSize/splineAtPoint.GetCount());
-    GePrint("length: "+sizeAvg+" P:"+LongToString(splineAtPoint.GetCount())+" dist: "+RealToString(distMin)+":"+RealToString(distMax));
+    
+    GePrint("l: "+sizeAvg+" layrs:"+LongToString(startChild)+"-" + LongToString(child_cnt)+" d: "+RealToString(distMin)+":"+RealToString(distMax));
     
     for (int k=0; k<child_cnt; k++){
         GeFree(trees[k]);
