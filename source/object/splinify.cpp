@@ -1,7 +1,7 @@
 #include "c4d.h"
 #include "c4d_symbols.h"
 #include "c4d_tools.h"
-#include "customgui_inexclude.h"
+#include "lib_splinehelp.h"
 #include "ge_dynamicarray.h"
 #include "octsplinify.h"
 #include "kd_tree.h"
@@ -13,9 +13,10 @@
 // unique ID obtained from www.plugincafe.com
 #define ID_SPLINIFYOBJECT 1030923
 
-typedef std::pair<LONG,Real> longRealPair;
-bool comparator ( const longRealPair& l, const longRealPair& r)
-{ return l.first < r.first; }
+typedef std::pair<SplineObject*,Real> SplinePair;
+bool comparator ( const SplinePair& l, const SplinePair& r){
+    return l.first < r.first;
+}
 
 class SplinifyData : public ObjectData
 {
@@ -208,8 +209,11 @@ SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocume
     }
     
     SplineObject* emptySpline = SplineObject::Alloc(0, SPLINETYPE_AKIMA);
+    
+    std::vector<SplinePair >splinePairs;
+
     Real avSplineSize = 0.0;
-    VLONG pcnt = 0;
+    SplineHelp* splineHelp = SplineHelp::Alloc();
     for (LONG i = 0; i < maxPointCnt; i++){
         if (splineAtPoint.GetCount() == i) {
             splineAtPoint.Push(GeDynamicArray<Vector>());
@@ -249,25 +253,36 @@ SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocume
         
         SplineObject	*spline=SplineObject::Alloc(splineAtPoint[i].GetCount(),SPLINETYPE_LINEAR);
         if (!spline) continue;
+        
         spline->GetDataInstance()->SetBool(SPLINEOBJECT_CLOSED, FALSE);
         
         Vector *padr = spline->GetPointW();
         for (LONG l=0;l<splineAtPoint[i].GetCount();l++){
             padr[l] = splineAtPoint[i][l];
         }
-        pcnt += splineAtPoint[i].GetCount();
-        spline->Message(MSG_UPDATE);
-        spline->InsertUnder(emptySpline);
         
+        
+        splineHelp->InitSpline(spline);
+        if (splineHelp->GetSplineLength()>0.0){
+            spline->InsertUnder(emptySpline);
+            splinePairs.push_back(SplinePair(spline, splineHelp->GetSplineLength()));
+        }        
         avSplineSize += splineAtPoint[i].GetCount();
         if(i % 20 == 0){
             StatusSetBar(10 + (90*i)/maxPointCnt);
             if (bt && bt->TestBreak()){
-                //pcnt = i;
                 break;
             }
         }
     }
+    
+//    std::sort(splinePairs.begin(), splinePairs.end(),comparator);
+//    LONG limit = splinePairs.size()<80?splinePairs.size():80;
+//    for (int s = 0; s < limit; s++){
+//        std::cout<<splinePairs[s].second<<std::endl;
+//        splinePairs[s].first->InsertUnder(emptySpline);
+//    }
+
     String sizeAvg = splineAtPoint.GetCount() == 0? "Nan":RealToString(avSplineSize/splineAtPoint.GetCount());
     
     GePrint("l: "+sizeAvg+" layrs:"+LongToString(startChild)+"-" + LongToString(child_cnt)+" d: "+RealToString(distMin)+":"+RealToString(distMax));
@@ -281,7 +296,7 @@ SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocume
     prvsFrame = crntFrame;
 	StatusClear();
     
-    if (avSplineSize == 0.0) return NULL;
+    if (splinePairs.size() == 0) return NULL;
     
     ModelingCommandData mcd;
     mcd.doc = doc;
