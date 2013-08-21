@@ -26,7 +26,7 @@ class SplinifyData : public ObjectData
         Random rng;
         GeDynamicArray<GeDynamicArray<Vector> > splineAtPoint;
         LONG prvsFrame = 0, oldFrame;
-        SplineObject* GetSpline(BaseObject* op, BaseThread* bt, BaseDocument *doc, GeDynamicArray<BaseObject*> &children, Real maxSeg, LONG delta);
+        SplineObject* GetSpline(BaseObject* op, BaseThread* bt, BaseDocument *doc, GeDynamicArray<BaseObject*> &children, Real maxSeg, LONG delta, LONG splinePercentage);
     
 	public:
 		virtual SplineObject* GetContour(BaseObject *op, BaseDocument *doc, Real lod, BaseThread *bt);
@@ -145,6 +145,7 @@ SplineObject* SplinifyData::GetContour(BaseObject *op, BaseDocument *doc, Real l
     LONG crntFrame = doc->GetTime().GetFrame(doc->GetFps());
 
     LONG delta = data->GetLong(CTTSPOBJECT_WINDOW,1);
+    LONG splinePercentage = data->GetLong(CTT_SPLINE_PERCENTAGE,50);
 
     LONG strtFrame = crntFrame - delta;
     strtFrame = strtFrame<0?0:strtFrame;
@@ -165,7 +166,7 @@ SplineObject* SplinifyData::GetContour(BaseObject *op, BaseDocument *doc, Real l
         splineAtPoint.FreeArray();
     }
 
-    SplineObject* ret = GetSpline(op, bt, doc, children, maxSeg, delta);
+    SplineObject* ret = GetSpline(op, bt, doc, children, maxSeg, delta, splinePercentage);
     
     for (int k=0; k<children.GetCount(); k++){
         if (children[k]){
@@ -176,7 +177,7 @@ SplineObject* SplinifyData::GetContour(BaseObject *op, BaseDocument *doc, Real l
     return ret;
 }
 
-SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocument *doc, GeDynamicArray<BaseObject*> &children, Real maxSeg, LONG delta){
+SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocument *doc, GeDynamicArray<BaseObject*> &children, Real maxSeg, LONG delta, LONG splinePercentage){
     LONG child_cnt = children.GetCount();
     BaseContainer *data = op->GetDataInstance();
     
@@ -229,8 +230,10 @@ SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocume
     if (splineAtPoint.GetCount() == 0){
         GeDynamicArray<LONG> validPoints(chldPoints[startChild].GetCount());
         validPoints.Fill(0,chldPoints[startChild].GetCount(),1);
+        LONG pntSkip = 100/splinePercentage;
         for (LONG i = 0; i < chldPoints[startChild].GetCount(); i++){
             
+            if (i % pntSkip != 0) continue;
             Vector queryPoint = chldPoints[startChild][i];
             
             Real dist = -1.;

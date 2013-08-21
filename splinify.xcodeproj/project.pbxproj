@@ -7,11 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		AF08590417C0471300199F49 /* octsplinify.h in Headers */ = {isa = PBXBuildFile; fileRef = AF08590317C0471300199F49 /* octsplinify.h */; };
 		AFA997F8179B7D5500546EC9 /* kd_tree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFA997F2179B7D5500546EC9 /* kd_tree.cpp */; };
 		AFA997F9179B7D5500546EC9 /* kd_tree.h in Headers */ = {isa = PBXBuildFile; fileRef = AFA997F3179B7D5500546EC9 /* kd_tree.h */; };
 		AFA997FA179B7D5500546EC9 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFA997F4179B7D5500546EC9 /* main.cpp */; };
 		AFA997FC179B7D5500546EC9 /* splinify.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFA997F7179B7D5500546EC9 /* splinify.cpp */; };
+		E6AAC5A017C547E0005ADAA3 /* c4d_strings.str in Resources */ = {isa = PBXBuildFile; fileRef = E6AAC59D17C547E0005ADAA3 /* c4d_strings.str */; };
+		E6AAC5A117C547E0005ADAA3 /* octsplinify.str in Resources */ = {isa = PBXBuildFile; fileRef = E6AAC59F17C547E0005ADAA3 /* octsplinify.str */; };
+		E6AAC5A517C547F2005ADAA3 /* octsplinify.h in Headers */ = {isa = PBXBuildFile; fileRef = E6AAC5A317C547F2005ADAA3 /* octsplinify.h */; };
+		E6AAC5A617C547F2005ADAA3 /* octsplinify.res in Resources */ = {isa = PBXBuildFile; fileRef = E6AAC5A417C547F2005ADAA3 /* octsplinify.res */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXBuildRule section */
@@ -54,11 +57,14 @@
 		6553A1DA0926F00F0034739A /* _api_debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xcconfig; name = _api_debug.xcconfig; path = ../../resource/_api_lib/_api_debug.xcconfig; sourceTree = SOURCE_ROOT; };
 		6553A1DB0926F00F0034739A /* _api_release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xcconfig; name = _api_release.xcconfig; path = ../../resource/_api_lib/_api_release.xcconfig; sourceTree = SOURCE_ROOT; };
 		65E51693083D10D0005BFD9A /* splinify.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = splinify.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
-		AF08590317C0471300199F49 /* octsplinify.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = octsplinify.h; path = res/description/octsplinify.h; sourceTree = "<group>"; };
 		AFA997F2179B7D5500546EC9 /* kd_tree.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = kd_tree.cpp; sourceTree = "<group>"; };
 		AFA997F3179B7D5500546EC9 /* kd_tree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kd_tree.h; sourceTree = "<group>"; };
 		AFA997F4179B7D5500546EC9 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		AFA997F7179B7D5500546EC9 /* splinify.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = splinify.cpp; sourceTree = "<group>"; };
+		E6AAC59D17C547E0005ADAA3 /* c4d_strings.str */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = c4d_strings.str; sourceTree = "<group>"; };
+		E6AAC59F17C547E0005ADAA3 /* octsplinify.str */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = octsplinify.str; sourceTree = "<group>"; };
+		E6AAC5A317C547F2005ADAA3 /* octsplinify.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = octsplinify.h; sourceTree = "<group>"; };
+		E6AAC5A417C547F2005ADAA3 /* octsplinify.res */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = octsplinify.res; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -95,7 +101,8 @@
 		65E51686083D10D0005BFD9A = {
 			isa = PBXGroup;
 			children = (
-				AF08590317C0471300199F49 /* octsplinify.h */,
+				E6AAC5A217C547F2005ADAA3 /* description */,
+				E6AAC59C17C547E0005ADAA3 /* strings_us */,
 				65636BD708E5922100FBAB34 /* source */,
 				65E516A4083D10D1005BFD9A /* _libs */,
 				65E51694083D10D0005BFD9A /* Products */,
@@ -128,6 +135,34 @@
 			path = object;
 			sourceTree = "<group>";
 		};
+		E6AAC59C17C547E0005ADAA3 /* strings_us */ = {
+			isa = PBXGroup;
+			children = (
+				E6AAC59D17C547E0005ADAA3 /* c4d_strings.str */,
+				E6AAC59E17C547E0005ADAA3 /* description */,
+			);
+			name = strings_us;
+			path = res/strings_us;
+			sourceTree = "<group>";
+		};
+		E6AAC59E17C547E0005ADAA3 /* description */ = {
+			isa = PBXGroup;
+			children = (
+				E6AAC59F17C547E0005ADAA3 /* octsplinify.str */,
+			);
+			path = description;
+			sourceTree = "<group>";
+		};
+		E6AAC5A217C547F2005ADAA3 /* description */ = {
+			isa = PBXGroup;
+			children = (
+				E6AAC5A317C547F2005ADAA3 /* octsplinify.h */,
+				E6AAC5A417C547F2005ADAA3 /* octsplinify.res */,
+			);
+			name = description;
+			path = res/description;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -136,7 +171,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AFA997F9179B7D5500546EC9 /* kd_tree.h in Headers */,
-				AF08590417C0471300199F49 /* octsplinify.h in Headers */,
+				E6AAC5A517C547F2005ADAA3 /* octsplinify.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -216,6 +251,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E6AAC5A017C547E0005ADAA3 /* c4d_strings.str in Resources */,
+				E6AAC5A117C547E0005ADAA3 /* octsplinify.str in Resources */,
+				E6AAC5A617C547F2005ADAA3 /* octsplinify.res in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

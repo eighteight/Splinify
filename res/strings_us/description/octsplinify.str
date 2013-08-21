@@ -3,7 +3,8 @@ STRINGTABLE Octsplinify
 	Octsplinify			"Splinify Object";
 
 	CTTSPOBJECT_MAXSEG		"Maximum Segment Length";
-        CTT_OBJECT_LINK                 "Sequence parent";
+    CTT_OBJECT_LINK         "Sequence parent";
 	CTTSPOBJECT_WINDOW		"Frame window";
 	CTTSPOBJECT_REL			"Relative";
+    CTT_SPLINE_PERCENTAGE   "Spline percentage";
 }
