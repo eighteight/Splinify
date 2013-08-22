@@ -117,7 +117,6 @@ void SplinifyData::DoRecursion(BaseObject *op, BaseObject *child, GeDynamicArray
 				DoRecursion(op,tp,points,ml);
 			}
 			else{
-
 				if (!child->GetBit(BIT_CONTROLOBJECT)){
 					if (child->IsInstanceOf(Opoint)){
 						PointObject * pChild = ToPoint(child);
@@ -145,7 +144,7 @@ SplineObject* SplinifyData::GetContour(BaseObject *op, BaseDocument *doc, Real l
     LONG crntFrame = doc->GetTime().GetFrame(doc->GetFps());
 
     LONG delta = data->GetLong(CTTSPOBJECT_WINDOW,1);
-    LONG splinePercentage = data->GetLong(CTT_SPLINE_PERCENTAGE,50);
+    LONG splinePercentage = data->GetLong(CTT_SPLINE_PERCENTAGE,1);
 
     LONG strtFrame = crntFrame - delta;
     strtFrame = strtFrame<0?0:strtFrame;
@@ -160,7 +159,11 @@ SplineObject* SplinifyData::GetContour(BaseObject *op, BaseDocument *doc, Real l
         }
         trck++;
     }
-    if (children.GetCount() < 2) return NULL;
+    if (children.GetCount() < 2) {
+        splineAtPoint.FreeArray();
+        prvsFrame = crntFrame;
+        return NULL;
+    }
     
     if (children.GetCount() < delta && prvsFrame > crntFrame) {
         splineAtPoint.FreeArray();
@@ -173,7 +176,7 @@ SplineObject* SplinifyData::GetContour(BaseObject *op, BaseDocument *doc, Real l
             BaseObject::Free(children[k]);
         }
     }
-    
+    prvsFrame = crntFrame;
     return ret;
 }
 
@@ -192,7 +195,7 @@ SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocume
     LONG crntFrame = doc->GetTime().GetFrame(doc->GetFps());
     LONG shift = crntFrame - prvsFrame;
     shift = shift < 0? 0: shift;
-    LONG startChild = prvsFrame == 0 ? 0: child_cnt - shift - 1;
+    LONG startChild = prvsFrame == 0 || crntFrame == prvsFrame? 0 : child_cnt - shift - 1;
     startChild = startChild < 0? 0 : startChild;
     LONG maxPointCnt = 0;
 
@@ -213,7 +216,8 @@ SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocume
     Real distMin = MAXREALr;
     Real distMax = 0.;
     
-    for (LONG i = 0; i < splineAtPoint.GetCount() && delta<child_cnt; i++){
+    for (LONG i = 0; i < splineAtPoint.GetCount(); i++){
+        // && delta<child_cnt
         splineAtPoint[i].Shift(0, -shift);
         splineAtPoint[i].ReSize(splineAtPoint[i].GetCount() - shift);
     }
@@ -223,22 +227,22 @@ SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocume
     std::vector<SplinePair >splinePairs;
 
     Real avSplineSize = 0.0, avSplineLength = 0.0;
-    
-    AutoAlloc<SplineHelp> splineHelp;
 
     ///////////init spline layer
     if (splineAtPoint.GetCount() == 0){
+        Random r;
+        r.Init(43432);
         GeDynamicArray<LONG> validPoints(chldPoints[startChild].GetCount());
         validPoints.Fill(0,chldPoints[startChild].GetCount(),1);
-        LONG pntSkip = 100/splinePercentage;
-        for (LONG i = 0; i < chldPoints[startChild].GetCount(); i++){
-            
-            if (i % pntSkip != 0) continue;
-            Vector queryPoint = chldPoints[startChild][i];
+        LONG fraction = chldPoints[startChild].GetCount()*splinePercentage/100;
+        LONG cnt = 0;
+        while (cnt < fraction) {
+            LONG indx = chldPoints[startChild].GetCount()*r.Get01();
+            Vector queryPoint = chldPoints[startChild][indx];
             
             Real dist = -1.;
             LONG closestIndx = trees[startChild+1]->getNearestNeighbor(chldPoints[startChild+1], queryPoint, validPoints, dist, 0);
-            if(closestIndx == -1){
+            if (closestIndx == -1){
                 GePrint("error finding neighbor");
                 continue;
             }
@@ -246,26 +250,25 @@ SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocume
             if (dist > maxSeg || dist < 0.01) {
                 continue;
             }
-            validPoints[closestIndx] = 0;
 
             if (dist > 0.0){
+                validPoints[closestIndx] = 0;
                 GeDynamicArray<Vector> rawSpline;
                 rawSpline.Push(queryPoint);
                 splineAtPoint.Push(rawSpline);
+                cnt++;
             }
         }
     }
-    
-    
-    
-    
+
     GeDynamicArray<GeDynamicArray<LONG> > validPoints(splineAtPoint.GetCount());
-    for (LONG k=0; k < 100; k++){
+    for (LONG k=0; k < splineAtPoint.GetCount(); k++){
         validPoints[k] = GeDynamicArray<LONG>(maxPointCnt);
         validPoints[k].Fill(0,maxPointCnt,1);//child_cnt - startChild
     
     }
     //////////
+    AutoAlloc<SplineHelp> splineHelp;
     for (LONG i = 0; i < splineAtPoint.GetCount(); i++){
         GeDynamicArray<Vector> queryVector = splineAtPoint[i];
         for (int k=startChild; k < child_cnt-1; k++){
@@ -287,7 +290,6 @@ SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocume
             }
             validPoints[k][closestIndx] = 0;
             Vector clsst = chldPoints[k+1][closestIndx];
-
             if (splineAtPoint[i].Find(clsst) == NOTOK){
                 splineAtPoint[i].Push(clsst);
             }
@@ -336,7 +338,6 @@ SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocume
         GeFree(trees[k]);
     }
 
-    prvsFrame = crntFrame;
 	StatusClear();
     
     if (splinePairs.size() == 0) return NULL;
