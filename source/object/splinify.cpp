@@ -217,9 +217,11 @@ SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocume
     Real distMax = 0.;
     
     for (LONG i = 0; i < splineAtPoint.GetCount(); i++){
-        // && delta<child_cnt
-        splineAtPoint[i].Shift(0, -shift);
-        splineAtPoint[i].ReSize(splineAtPoint[i].GetCount() - shift);
+        LONG shift = splineAtPoint[i].GetCount() - delta;
+        if (shift > 0) {
+            splineAtPoint[i].Shift(0, -shift);
+            splineAtPoint[i].ReSize(splineAtPoint[i].GetCount() - shift);
+        }
     }
     
     SplineObject* emptySpline = SplineObject::Alloc(0, SPLINETYPE_AKIMA);
@@ -228,15 +230,15 @@ SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocume
 
     Real avSplineSize = 0.0, avSplineLength = 0.0;
 
-    ///////////init spline layer
     if (splineAtPoint.GetCount() == 0){
         Random r;
         r.Init(43432);
         GeDynamicArray<LONG> validPoints(chldPoints[startChild].GetCount());
         validPoints.Fill(0,chldPoints[startChild].GetCount(),1);
         LONG fraction = chldPoints[startChild].GetCount()*splinePercentage/100;
-        LONG cnt = 0;
-        while (cnt < fraction) {
+        LONG cnt = 0, cycleCount = 0;
+        while (cnt < fraction || cycleCount < 2*fraction) {
+            cycleCount++;
             LONG indx = chldPoints[startChild].GetCount()*r.Get01();
             Vector queryPoint = chldPoints[startChild][indx];
             
@@ -265,7 +267,6 @@ SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocume
     for (LONG k=0; k < splineAtPoint.GetCount(); k++){
         validPoints[k] = GeDynamicArray<LONG>(maxPointCnt);
         validPoints[k].Fill(0,maxPointCnt,1);//child_cnt - startChild
-    
     }
     //////////
     AutoAlloc<SplineHelp> splineHelp;
