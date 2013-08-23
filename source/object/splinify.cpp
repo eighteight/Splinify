@@ -170,7 +170,7 @@ SplineObject* SplinifyData::GetContour(BaseObject *op, BaseDocument *doc, Real l
     }
 
     SplineObject* ret = GetSpline(op, bt, doc, children, maxSeg, delta, splinePercentage);
-    
+    ret->GetDataInstance()->SetLong(SPLINEOBJECT_INTERPOLATION, SPLINEOBJECT_INTERPOLATION_NONE);
     for (int k=0; k<children.GetCount(); k++){
         if (children[k]){
             BaseObject::Free(children[k]);
@@ -224,7 +224,7 @@ SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocume
         }
     }
     
-    SplineObject* emptySpline = SplineObject::Alloc(0, SPLINETYPE_AKIMA);
+    SplineObject* emptySpline = SplineObject::Alloc(0, SPLINETYPE_BSPLINE);
     
     std::vector<SplinePair >splinePairs;
 
@@ -297,7 +297,7 @@ SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocume
         }
         if (splineAtPoint[i].GetCount() == 0) continue;
         
-        SplineObject	*spline=SplineObject::Alloc(splineAtPoint[i].GetCount(),SPLINETYPE_LINEAR);
+        SplineObject	*spline=SplineObject::Alloc(splineAtPoint[i].GetCount(),SPLINETYPE_BSPLINE);
         if (!spline) continue;
         
         spline->GetDataInstance()->SetBool(SPLINEOBJECT_CLOSED, FALSE);
