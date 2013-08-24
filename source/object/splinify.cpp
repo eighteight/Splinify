@@ -26,7 +26,7 @@ class SplinifyData : public ObjectData
         Random rng;
         GeDynamicArray<GeDynamicArray<Vector> > splineAtPoint;
         LONG prvsFrame = 0, oldFrame;
-        SplineObject* GetSpline(BaseObject* op, BaseThread* bt, BaseDocument *doc, GeDynamicArray<BaseObject*> &children, Real maxSeg, LONG delta, LONG splinePercentage);
+        SplineObject* ComputeSpline(BaseThread* bt, GeDynamicArray<BaseObject*> &children, Real maxSeg, LONG delta, LONG splinePercentage, LONG startChild, GeDynamicArray<GeDynamicArray<Vector> > &chldPoints, GeDynamicArray<KDNode*> &trees, LONG maxPoints,  LONG child_cnt);
     
 	public:
 		virtual SplineObject* GetContour(BaseObject *op, BaseDocument *doc, Real lod, BaseThread *bt);
@@ -169,36 +169,23 @@ SplineObject* SplinifyData::GetContour(BaseObject *op, BaseDocument *doc, Real l
         splineAtPoint.FreeArray();
     }
 
-    SplineObject* ret = GetSpline(op, bt, doc, children, maxSeg, delta, splinePercentage);
-    ret->GetDataInstance()->SetLong(SPLINEOBJECT_INTERPOLATION, SPLINEOBJECT_INTERPOLATION_NONE);
-    for (int k=0; k<children.GetCount(); k++){
-        if (children[k]){
-            BaseObject::Free(children[k]);
-        }
-    }
-    prvsFrame = crntFrame;
-    return ret;
-}
-
-SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocument *doc, GeDynamicArray<BaseObject*> &children, Real maxSeg, LONG delta, LONG splinePercentage){
     LONG child_cnt = children.GetCount();
-    BaseContainer *data = op->GetDataInstance();
     
     LONG splineInterpolation = data->GetLong(SPLINEOBJECT_INTERPOLATION);
-
+    
 	StatusSetBar(0);
     StatusSetText("Collecting Points");
     GeDynamicArray<KDNode*> trees(child_cnt);
     GeDynamicArray<GeDynamicArray<Vector> > chldPoints(child_cnt);
     
     rng.Init(1244);
-    LONG crntFrame = doc->GetTime().GetFrame(doc->GetFps());
+
     LONG shift = crntFrame - prvsFrame;
     shift = shift < 0? 0: shift;
     LONG startChild = prvsFrame == 0 || crntFrame == prvsFrame? 0 : child_cnt - shift - 1;
     startChild = startChild < 0? 0 : startChild;
     LONG maxPointCnt = 0;
-
+    
     for (int k=splineAtPoint.GetCount() == 0 ? startChild: startChild+1; k < child_cnt; k++){
         Matrix ml;
         DoRecursion(op,children[k],chldPoints[k], ml);
@@ -210,6 +197,35 @@ SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocume
         }
     }
     
+    SplineObject* parentSpline = ComputeSpline(bt, children, maxSeg, delta, splinePercentage, startChild, chldPoints, trees, maxPointCnt, child_cnt);
+
+    ModelingCommandData mcd;
+    mcd.doc = doc;
+    mcd.op = parentSpline;
+    
+    if(!SendModelingCommand(MCOMMAND_JOIN, mcd)){
+        return NULL;
+    }
+    
+    SplineObject* ret = ToSpline(mcd.result->GetIndex(0L));
+    
+    ret->GetDataInstance()->SetLong(SPLINEOBJECT_INTERPOLATION, SPLINEOBJECT_INTERPOLATION_NONE);
+    
+    for (int k=0; k<child_cnt; k++){
+        GeFree(trees[k]);
+    }
+    
+    for (int k=0; k<children.GetCount(); k++){
+        if (children[k]){
+            BaseObject::Free(children[k]);
+        }
+    }
+    prvsFrame = crntFrame;
+    return ret;
+}
+
+SplineObject* SplinifyData::ComputeSpline(BaseThread* bt, GeDynamicArray<BaseObject*> &children, Real maxSeg, LONG delta, LONG splinePercentage, LONG startChild, GeDynamicArray<GeDynamicArray<Vector> > &chldPoints, GeDynamicArray<KDNode*> &trees, LONG maxPoints, LONG child_cnt){
+
     StatusSetBar(5);
     StatusSetText("Connecting Points");
     
@@ -265,8 +281,8 @@ SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocume
 
     GeDynamicArray<GeDynamicArray<LONG> > validPoints(splineAtPoint.GetCount());
     for (LONG k=0; k < splineAtPoint.GetCount(); k++){
-        validPoints[k] = GeDynamicArray<LONG>(maxPointCnt);
-        validPoints[k].Fill(0,maxPointCnt,1);//child_cnt - startChild
+        validPoints[k] = GeDynamicArray<LONG>(maxPoints);
+        validPoints[k].Fill(0,maxPoints,1);//child_cnt - startChild
     }
     //////////
     AutoAlloc<SplineHelp> splineHelp;
@@ -334,24 +350,12 @@ SplineObject* SplinifyData::GetSpline(BaseObject* op, BaseThread* bt, BaseDocume
     String sizeAvg = splineAtPoint.GetCount() == 0? "Nan":RealToString(avSplineSize/splineAtPoint.GetCount());
     
     GePrint("pnts="+sizeAvg+" wndw="+LongToString(startChild)+"-" + LongToString(child_cnt)+" d="+RealToString(distMin)+":"+RealToString(distMax)+" sl="+RealToString(avSplineLength/avSplineSize));
-    
-    for (int k=0; k<child_cnt; k++){
-        GeFree(trees[k]);
-    }
 
 	StatusClear();
     
     if (splinePairs.size() == 0) return NULL;
     
-    ModelingCommandData mcd;
-    mcd.doc = doc;
-    mcd.op = emptySpline;
-    
-    if(!SendModelingCommand(MCOMMAND_JOIN, mcd)){
-        return NULL;
-    }
-    
-    return ToSpline(mcd.result->GetIndex(0L));
+    return emptySpline;
     
 Error:
     for (int i = 0; i < children.GetCount(); i++){
