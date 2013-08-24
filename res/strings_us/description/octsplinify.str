@@ -7,4 +7,6 @@ STRINGTABLE Octsplinify
 	CTTSPOBJECT_WINDOW		"Frame window";
 	CTTSPOBJECT_REL			"Relative";
     CTT_SPLINE_PERCENTAGE   "Spline fraction";
+    START_FRAME             "Start Frame";
+    END_FRAME               "End Frame";
 }
