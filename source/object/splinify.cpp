@@ -113,27 +113,22 @@ SplineObject* SplinifyData::GetContour(BaseObject *op, BaseDocument *doc, Real l
     if (startFrame >=endFrame) return NULL;
     
     Real maxSeg = data->GetReal(CTTSPOBJECT_MAXSEG,30.);
-    LONG crntFrame = doc->GetTime().GetFrame(doc->GetFps());
 
-    LONG delta = data->GetLong(CTTSPOBJECT_WINDOW,1);
+    LONG delta = data->GetLong(OBJECT_SKIP,1);
     LONG splinePercentage = data->GetLong(CTT_SPLINE_PERCENTAGE,1);
-
-    LONG strtFrame = crntFrame - delta;
-    strtFrame = strtFrame<0?0:strtFrame;
 
     GeDynamicArray<BaseObject*> children;
 
     BaseObject* chld = NULL;
     LONG trck = 0;
     for (chld=parent->GetDownLast(); chld; chld=chld->GetPred()) {
-        if (trck >= startFrame && trck<= endFrame){
+        if (trck >= startFrame && trck<= endFrame && trck % delta == 0){
             children.Push((BaseObject*)chld->GetClone(COPYFLAGS_NO_HIERARCHY|COPYFLAGS_NO_ANIMATION|COPYFLAGS_NO_BITS,NULL));
         }
         trck++;
     }
     if (children.GetCount() < 2) {
         splineAtPoint.FreeArray();
-        prvsFrame = crntFrame;
         return NULL;
     }
 
@@ -143,7 +138,7 @@ SplineObject* SplinifyData::GetContour(BaseObject *op, BaseDocument *doc, Real l
     
 	StatusSetBar(0);
     StatusSetText("Collecting Points");
-    GeDynamicArray<KDNode*> trees(child_cnt);
+    GeDynamicArray<KDNode*> trees(children.GetCount());
     GeDynamicArray<GeDynamicArray<Vector> > chldPoints(child_cnt);
     
     rng.Init(1244);
@@ -189,7 +184,6 @@ SplineObject* SplinifyData::GetContour(BaseObject *op, BaseDocument *doc, Real l
             BaseObject::Free(children[k]);
         }
     }
-    prvsFrame = crntFrame;
     return ret;
 Error:
     for (int i = 0; i < children.GetCount(); i++){
@@ -245,8 +239,8 @@ SplineObject* SplinifyData::ComputeSpline(BaseThread* bt, Real maxSeg, LONG spli
         }
     }
 
-    GeDynamicArray<GeDynamicArray<LONG> > validPoints(splineAtPoint.GetCount());
-    for (LONG k=0; k < splineAtPoint.GetCount(); k++){
+    GeDynamicArray<GeDynamicArray<LONG> > validPoints(chldPoints.GetCount());
+    for (LONG k=0; k < chldPoints.GetCount(); k++){
         validPoints[k] = GeDynamicArray<LONG>(maxPoints);
         validPoints[k].Fill(0,maxPoints,1);//child_cnt - startChild
     }

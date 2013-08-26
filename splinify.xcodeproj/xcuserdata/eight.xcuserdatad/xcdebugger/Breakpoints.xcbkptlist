@@ -21,7 +21,7 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "source/object/splinify.cpp"
-         timestampString = "399017654.980913"
+         timestampString = "399141407.257891"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
          startingLineNumber = "254"
@@ -34,11 +34,11 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "source/object/splinify.cpp"
-         timestampString = "399018235.377125"
+         timestampString = "399142158.961602"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "283"
-         endingLineNumber = "283"
+         startingLineNumber = "207"
+         endingLineNumber = "207"
          landmarkName = "SplinifyData::ComputeSpline(BaseThread* bt, Real maxSeg, LONG splinePercentage, GeDynamicArray&lt;GeDynamicArray&lt;Vector&gt; &gt; &amp;chldPoints, GeDynamicArray&lt;KDNode*&gt; &amp;trees, LONG maxPoints)"
          landmarkType = "5">
       </FileBreakpoint>
@@ -47,12 +47,12 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "source/object/splinify.cpp"
-         timestampString = "399018235.377125"
+         timestampString = "399145989.84717"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "306"
-         endingLineNumber = "306"
-         landmarkName = "SplinifyData::ComputeSpline(BaseThread* bt, Real maxSeg, LONG splinePercentage, GeDynamicArray&lt;GeDynamicArray&lt;Vector&gt; &gt; &amp;chldPoints, GeDynamicArray&lt;KDNode*&gt; &amp;trees, LONG maxPoints)"
+         startingLineNumber = "123"
+         endingLineNumber = "123"
+         landmarkName = "SplinifyData::GetContour(BaseObject *op, BaseDocument *doc, Real lod, BaseThread *bt)"
          landmarkType = "5">
       </FileBreakpoint>
       <FileBreakpoint
@@ -60,12 +60,12 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "source/object/splinify.cpp"
-         timestampString = "399018235.377125"
+         timestampString = "399146139.947935"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "260"
-         endingLineNumber = "260"
-         landmarkName = "SplinifyData::ComputeSpline(BaseThread* bt, Real maxSeg, LONG splinePercentage, GeDynamicArray&lt;GeDynamicArray&lt;Vector&gt; &gt; &amp;chldPoints, GeDynamicArray&lt;KDNode*&gt; &amp;trees, LONG maxPoints)"
+         startingLineNumber = "126"
+         endingLineNumber = "126"
+         landmarkName = "SplinifyData::GetContour(BaseObject *op, BaseDocument *doc, Real lod, BaseThread *bt)"
          landmarkType = "5">
       </FileBreakpoint>
    </FileBreakpoints>
