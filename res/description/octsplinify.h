@@ -9,7 +9,8 @@ enum
     CTT_OBJECT_LINK,
     CTT_SPLINE_PERCENTAGE,
     START_FRAME,
-    END_FRAME
+    END_FRAME,
+    TAKE_LONGEST
 };
 
 #endif

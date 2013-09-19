@@ -4,7 +4,8 @@ STRINGTABLE Octsplinify
 
 	CTTSPOBJECT_MAXSEG		"Maximum Segment Length";
     CTT_OBJECT_LINK         "Sequence parent";
-	OBJECT_SKIP		"Skip";
+	OBJECT_SKIP             "Every frame";
+    TAKE_LONGEST            "Take longest, percent";
 	CTTSPOBJECT_REL			"Relative";
     CTT_SPLINE_PERCENTAGE   "Spline fraction";
     START_FRAME             "Start Frame";

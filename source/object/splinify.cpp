@@ -15,7 +15,7 @@
 
 typedef std::pair<SplineObject*,Real> SplinePair;
 bool comparator ( const SplinePair& l, const SplinePair& r){
-    return l.first < r.first;
+    return l.second > r.second;
 }
 
 class SplinifyData : public ObjectData
@@ -135,6 +135,7 @@ SplineObject* SplinifyData::GetContour(BaseObject *op, BaseDocument *doc, Real l
     LONG child_cnt = children.GetCount();
     
     LONG splineInterpolation = data->GetLong(SPLINEOBJECT_INTERPOLATION);
+    LONG longestPercent = data->GetLong(TAKE_LONGEST, 1);
     
 	StatusSetBar(0);
     StatusSetText("Collecting Points");
@@ -288,7 +289,6 @@ SplineObject* SplinifyData::ComputeSpline(BaseThread* bt, Real maxSeg, LONG spli
         splineHelp->InitSpline(spline);
         Real splnLength = splineHelp->GetSplineLength();
         if (splnLength>0.0){
-            spline->InsertUnder(parentSpline);
             splinePairs.push_back(SplinePair(spline, splineHelp->GetSplineLength()));
             avSplineLength += splnLength;
             avSplineSize += splineAtPoint[i].GetCount();
@@ -304,12 +304,13 @@ SplineObject* SplinifyData::ComputeSpline(BaseThread* bt, Real maxSeg, LONG spli
         }
     }
     
-//    std::sort(splinePairs.begin(), splinePairs.end(),comparator);
-//    LONG limit = splinePairs.size()<80?splinePairs.size():80;
-//    for (int s = 0; s < limit; s++){
-//        std::cout<<splinePairs[s].second<<std::endl;
-//        splinePairs[s].first->InsertUnder(emptySpline);
-//    }
+    LONG limit = splinePairs.size()<80?splinePairs.size():80;
+    std::sort(splinePairs.begin(), splinePairs.end(),comparator);
+    
+    for (int s = 0; s < limit; s++){
+        avSplineLength += splinePairs[s].second;
+        splinePairs[s].first->InsertUnder(parentSpline);
+    }
 
     String sizeAvg = splineAtPoint.GetCount() == 0? "Nan":RealToString(avSplineSize/splineAtPoint.GetCount());
     
