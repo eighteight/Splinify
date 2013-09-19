@@ -26,7 +26,7 @@ class SplinifyData : public ObjectData
         Random rng;
         GeDynamicArray<GeDynamicArray<Vector> > splineAtPoint;
         LONG prvsFrame = 0, oldFrame;
-        SplineObject* ComputeSpline(BaseThread* bt, Real maxSeg, LONG splinePercentage, GeDynamicArray<GeDynamicArray<Vector> > &chldPoints, GeDynamicArray<KDNode*> &trees, LONG maxPoints);
+        SplineObject* ComputeSpline(BaseThread* bt, Real maxSeg, LONG splinePercentage, GeDynamicArray<GeDynamicArray<Vector> > &chldPoints, GeDynamicArray<KDNode*> &trees, LONG maxPoints, LONG longestPercent);
     
 	public:
 		virtual SplineObject* GetContour(BaseObject *op, BaseDocument *doc, Real lod, BaseThread *bt);
@@ -162,7 +162,7 @@ SplineObject* SplinifyData::GetContour(BaseObject *op, BaseDocument *doc, Real l
         }
     }
     
-    SplineObject* parentSpline = ComputeSpline(bt, maxSeg, splinePercentage, chldPoints, trees, maxPointCnt);
+    SplineObject* parentSpline = ComputeSpline(bt, maxSeg, splinePercentage, chldPoints, trees, maxPointCnt, longestPercent);
 
     ModelingCommandData mcd;
     mcd.doc = doc;
@@ -193,7 +193,7 @@ Error:
     return NULL;
 }
 
-SplineObject* SplinifyData::ComputeSpline(BaseThread* bt, Real maxSeg, LONG splinePercentage, GeDynamicArray<GeDynamicArray<Vector> > &chldPoints, GeDynamicArray<KDNode*> &trees, LONG maxPoints){
+SplineObject* SplinifyData::ComputeSpline(BaseThread* bt, Real maxSeg, LONG splinePercentage, GeDynamicArray<GeDynamicArray<Vector> > &chldPoints, GeDynamicArray<KDNode*> &trees, LONG maxPoints, LONG longestPercent){
 
     StatusSetBar(5);
     StatusSetText("Connecting Points");
@@ -304,7 +304,7 @@ SplineObject* SplinifyData::ComputeSpline(BaseThread* bt, Real maxSeg, LONG spli
         }
     }
     
-    LONG limit = splinePairs.size()<80?splinePairs.size():80;
+    LONG limit = splinePairs.size() * longestPercent/100;
     std::sort(splinePairs.begin(), splinePairs.end(),comparator);
     
     for (int s = 0; s < limit; s++){
