@@ -264,7 +264,7 @@ SplineObject* SplinifyData::ComputeSpline(BaseThread* bt, Real maxSeg, LONG spli
             distMin = distMin < dist ? distMin : dist;
             distMax = distMax > dist ? distMax : dist;
             
-            if (dist > maxSeg || dist < 0.01) {
+            if (dist > maxSeg || dist < 10.0) {
                 continue;
             }
             validPoints[k][closestIndx] = 0;
@@ -304,7 +304,9 @@ SplineObject* SplinifyData::ComputeSpline(BaseThread* bt, Real maxSeg, LONG spli
         }
     }
     
-    LONG limit = splinePairs.size() * longestPercent/100;
+    LONG limit = splinePairs.size() * longestPercent / 100;
+    limit = limit == 0 ? 1 : limit;
+    
     std::sort(splinePairs.begin(), splinePairs.end(),comparator);
     
     for (int s = 0; s < limit; s++){
