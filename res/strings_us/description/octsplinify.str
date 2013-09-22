@@ -2,12 +2,11 @@ STRINGTABLE Octsplinify
 {
 	Octsplinify			"Splinify Object";
 
-	CTTSPOBJECT_MAXSEG		"Maximum Segment Length";
+	CTTSPOBJECT_MAXSEG		"Maximum segment length";
+    CTTSPOBJECT_MINSEG		"Minimum segment length";
     CTT_OBJECT_LINK         "Sequence parent";
-	OBJECT_SKIP             "Every frame";
-    TAKE_LONGEST            "Take longest, percent";
-	CTTSPOBJECT_REL			"Relative";
-    CTT_SPLINE_PERCENTAGE   "Spline fraction";
-    START_FRAME             "Start Frame";
-    END_FRAME               "End Frame";
+	OBJECT_SKIP             "Every object";
+    TAKE_LONGEST            "Take longest, %";
+    START_FRAME             "Start object";
+    END_FRAME               "End object";
 }
