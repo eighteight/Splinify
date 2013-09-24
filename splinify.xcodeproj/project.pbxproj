@@ -92,8 +92,8 @@
 		657FF105085913EC00750201 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				657FF109085913EC00750201 /* lib_api_release.a */,
-				26EDA6240FA303CF00050D59 /* lib_api_stdmem_release.a */,
+				657FF109085913EC00750201 /* lib_api_debug.a */,
+				26EDA6240FA303CF00050D59 /* lib_api_stdmem_debug.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -204,6 +204,8 @@
 /* Begin PBXProject section */
 		65E5168A083D10D0005BFD9A /* Project object */ = {
 			isa = PBXProject;
+			attributes = {
+			};
 			buildConfigurationList = 65450B6A085517D90099394F /* Build configuration list for PBXProject "splinify" */;
 			compatibilityVersion = "Xcode 3.1";
 			developmentRegion = English;
@@ -228,18 +230,16 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
-		26EDA6240FA303CF00050D59 /* lib_api_stdmem_release.a */ = {
+		26EDA6240FA303CF00050D59 /* lib_api_stdmem_debug.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
-			name = lib_api_stdmem_release.a;
 			path = lib_api_stdmem_debug.a;
 			remoteRef = 26EDA6230FA303CF00050D59 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		657FF109085913EC00750201 /* lib_api_release.a */ = {
+		657FF109085913EC00750201 /* lib_api_debug.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
-			name = lib_api_release.a;
 			path = lib_api_debug.a;
 			remoteRef = 657FF108085913EC00750201 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
