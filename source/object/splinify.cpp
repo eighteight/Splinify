@@ -206,7 +206,7 @@ SplineObject* SplinifyData::ComputeSpline(BaseThread* bt, GeDynamicArray<GeDynam
             Vector queryPoint = splinesAtPoint[i][splinesAtPoint[i].GetCount()-1];
             
             Real dist = -1.;
-            LONG closestIndx = trees[o+1]->getNearestNeighbor(objectPoints[o+1], queryPoint, validPoints[o+1], dist, 0); //query next object
+            LONG closestIndx = trees[o+1]->getNearestNeighbor(objectPoints[o+1], queryPoint, validPoints[o], dist, 0); //query next object
             if(closestIndx == -1){
                 GePrint("error finding neighbor");
                 continue;
