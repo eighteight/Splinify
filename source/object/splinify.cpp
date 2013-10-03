@@ -191,6 +191,7 @@ SplineObject* SplinifyData::ComputeSpline(BaseThread* bt, GeDynamicArray<GeDynam
 
     GeDynamicArray<GeDynamicArray<LONG> > validPoints(objectPoints.GetCount());
     for (LONG k=0; k < objectPoints.GetCount(); k++){
+        //maxPoints = objectPoints[k].GetCount();
         validPoints[k] = GeDynamicArray<LONG>(maxPoints);
         validPoints[k].Fill(0,maxPoints,1);
     }
@@ -208,7 +209,7 @@ SplineObject* SplinifyData::ComputeSpline(BaseThread* bt, GeDynamicArray<GeDynam
             Real dist = -1.;
             LONG closestIndx = trees[o+1]->getNearestNeighbor(objectPoints[o+1], queryPoint, validPoints[o], dist, 0); //query next object
             if(closestIndx == -1){
-                GePrint("error finding neighbor");
+                GePrint("error finding neighbor "+LongToString(o)+"/"+LongToString(i));
                 continue;
             }
             
@@ -226,7 +227,7 @@ SplineObject* SplinifyData::ComputeSpline(BaseThread* bt, GeDynamicArray<GeDynam
             }
         }
         
-        SplineObject	*spline=SplineObject::Alloc(splinesAtPoint[i].GetCount(),SPLINETYPE_BSPLINE);
+        SplineObject* spline=SplineObject::Alloc(splinesAtPoint[i].GetCount(),SPLINETYPE_BSPLINE);
         if (!spline) continue;
 
         spline->GetDataInstance()->SetBool(SPLINEOBJECT_CLOSED, FALSE);
@@ -238,7 +239,7 @@ SplineObject* SplinifyData::ComputeSpline(BaseThread* bt, GeDynamicArray<GeDynam
 
         splineHelp->InitSpline(spline);
         Real splnLength = splineHelp->GetSplineLength();
-        if (splnLength>0.0){
+        if (splnLength > 0.0){
             splinePairs.push_back(SplinePair(spline, splnLength));
             avSplineLength += splnLength;
             avSplineSize += splinesAtPoint[i].GetCount();
@@ -246,10 +247,12 @@ SplineObject* SplinifyData::ComputeSpline(BaseThread* bt, GeDynamicArray<GeDynam
             SplineObject::Free(spline);
         }
 
-        if(i % 5 == 0){
-            StatusSetBar(10 + (90*i)/splinesAtPoint.GetCount());
+        if (i % 5 == 0){
+            LONG progress = 10 + (90*i)/splinesAtPoint.GetCount();
+            StatusSetBar(progress);
+            StatusSetText(LongToString(progress)+"%");
             if (bt && bt->TestBreak()){
-                break;
+                //break; //this break seems to be kicking in randomly killing the loop
             }
         }
     }
