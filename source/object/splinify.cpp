@@ -201,23 +201,28 @@ SplineObject* SplinifyData::ComputeSpline(BaseThread* bt, GeDynamicArray<GeDynam
     AutoAlloc<SplineHelp> splineHelp;
     LONG i, o;
     for (i = 0; i < splinesAtPoint.GetCount(); i++){//iterate points
-
-        for (o=0; o < objectPoints.GetCount()-1; o++){ //iterate objects
+        bool lastPointCaptured = true;
+        for (o=0; o < objectPoints.GetCount()-1; o++){ // for each point iterate objects and collect nearest points
 
             Vector queryPoint = splinesAtPoint[i][splinesAtPoint[i].GetCount()-1];
             
             Real dist = -1.;
             LONG closestIndx = trees[o+1]->getNearestNeighbor(objectPoints[o+1], queryPoint, validPoints[o], dist, 0); //query next object
-            if(closestIndx == -1){
+            if (closestIndx == -1) {
                 GePrint("error finding neighbor "+LongToString(o)+"/"+LongToString(i));
+                if (o == objectPoints.GetCount()-1){
+                    lastPointCaptured = false;
+                }
                 continue;
             }
             
             distMin = distMin < dist ? distMin : dist;
             distMax = distMax > dist ? distMax : dist;
             
-            if (dist > maxSeg || dist < minSeg) {
-                continue;
+            if (o != objectPoints.GetCount()-1) {
+                if (dist > maxSeg || dist < minSeg) {
+                    continue;
+                }
             }
             validPoints[o][closestIndx] = 0;
             Vector clsst = objectPoints[o+1][closestIndx];
@@ -227,6 +232,7 @@ SplineObject* SplinifyData::ComputeSpline(BaseThread* bt, GeDynamicArray<GeDynam
             }
         }
         
+        if (!lastPointCaptured) continue;
         SplineObject* spline=SplineObject::Alloc(splinesAtPoint[i].GetCount(),SPLINETYPE_BSPLINE);
         if (!spline) continue;
 
