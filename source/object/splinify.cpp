@@ -280,7 +280,7 @@ SplineObject* SplinifyData::ComputeSpline(BaseThread* bt, GeDynamicArray<GeDynam
         
         GePrint("d="+RealToString(distMin)+" : "+RealToString(distMax)+" avSpln="+RealToString(avSplineLength/avSplineSize));
     }
-	StatusClear();
+	StatusSetText(LongToString(i)+" points "+LongToString(splnSize)+" splines");
     
     if (splnSize == 0) return NULL;
     return parentSpline;
